@@ -1,26 +1,35 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { audioEngine } from '@/lib/audioEngine';
 import { usePlayback } from '@/lib/usePlayback';
 import { useStore, MODULE_COLORS, MODULE_LABELS, MODULES } from '@/lib/store';
+import { createClient } from '@/lib/supabase/client';
 import TransportBar from './TransportBar';
 import ModuleControls from './ModuleControls';
 import VaultPanel from './VaultPanel';
 import ArrangementTimeline from './ArrangementTimeline';
+import SubmitModal from './SubmitModal';
+import type { User } from '@supabase/supabase-js';
 
 export default function BeatdownShell() {
   const activeModule = useStore((s) => s.activeModule);
   const setActiveModule = useStore((s) => s.setActiveModule);
   const toggleVault = useStore((s) => s.toggleVault);
   const vaultOpen = useStore((s) => s.vaults[activeModule].vaultOpen);
+  const [user, setUser] = useState<User | null>(null);
+  const [submitOpen, setSubmitOpen] = useState(false);
 
   const { isPlaying, playhead, timelineSec, toggle } = usePlayback();
 
   useEffect(() => {
     audioEngine.init();
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
   }, []);
-
-  const color = MODULE_COLORS[activeModule];
 
   return (
     <div
@@ -34,8 +43,12 @@ export default function BeatdownShell() {
         overflow: 'hidden',
       }}
     >
-      {/* Transport */}
-      <TransportBar isPlaying={isPlaying} onTogglePlay={toggle} />
+      <TransportBar
+        isPlaying={isPlaying}
+        onTogglePlay={toggle}
+        onSubmit={() => setSubmitOpen(true)}
+        user={user}
+      />
 
       {/* Module Tabs */}
       <div style={{ display: 'flex', flexShrink: 0, borderBottom: '3px solid #000' }}>
@@ -62,21 +75,11 @@ export default function BeatdownShell() {
             >
               {MODULE_LABELS[m]}
               {isActive && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: '#000',
-                  }}
-                />
+                <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: '#000' }} />
               )}
             </button>
           );
         })}
-        {/* Vault toggle */}
         <button
           onClick={() => toggleVault(activeModule)}
           style={{
@@ -98,7 +101,7 @@ export default function BeatdownShell() {
         </button>
       </div>
 
-      {/* Main area: controls + optional vault */}
+      {/* Main area */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
         <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
           <ModuleControls module={activeModule} playhead={playhead} />
@@ -106,8 +109,9 @@ export default function BeatdownShell() {
         {vaultOpen && <VaultPanel module={activeModule} />}
       </div>
 
-      {/* Arrangement Timeline */}
       <ArrangementTimeline timelineSec={timelineSec} />
+
+      {submitOpen && <SubmitModal user={user} onClose={() => setSubmitOpen(false)} />}
     </div>
   );
 }
