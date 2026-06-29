@@ -19,8 +19,10 @@ export default function ModuleControls({ module, playhead, isPlaying, onTogglePl
   const [cutoff, setCutoff] = useState(0.8);
   const [decay, setDecay] = useState(0.3);
   const [attack, setAttack] = useState(0.05);
-  const [res, setRes] = useState(0.05); // 0–1 mapped to Q 0–20
-  const [pan, setPan] = useState(0.5);  // 0–1 mapped to -1..+1
+  const moduleSettings = useStore((s) => s.moduleSettings[module]);
+  const setModuleSettings = useStore((s) => s.setModuleSettings);
+  const res = moduleSettings?.res ?? 0.05;
+  const pan = moduleSettings?.pan ?? 0.5;
 
   const handleVolume = useCallback((v: number) => {
     setVolume(v);
@@ -44,14 +46,14 @@ export default function ModuleControls({ module, playhead, isPlaying, onTogglePl
   }, [module]);
 
   const handleRes = useCallback((v: number) => {
-    setRes(v);
-    audioEngine.setRes(module, v * 20); // 0–20 Q range
-  }, [module]);
+    setModuleSettings(module, { res: v });
+    audioEngine.setRes(module, v * 20);
+  }, [module, setModuleSettings]);
 
   const handlePan = useCallback((v: number) => {
-    setPan(v);
-    audioEngine.setPan(module, (v - 0.5) * 2); // 0–1 → -1..+1
-  }, [module]);
+    setModuleSettings(module, { pan: v });
+    audioEngine.setPan(module, (v - 0.5) * 2);
+  }, [module, setModuleSettings]);
 
   const bpm = useStore((s) => s.bpm);
   const setBpm = useStore((s) => s.setBpm);

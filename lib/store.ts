@@ -52,15 +52,22 @@ function emptyGrid(): Grid {
   return Array.from({ length: GRID_ROWS }, () => Array(GRID_STEPS).fill(false));
 }
 
+export interface ModuleSettings {
+  res: number; // 0–1
+  pan: number; // 0–1
+}
+
 interface AppState {
   activeModule: ModuleType;
   vaults: Record<ModuleType, ModuleVault>;
-  grids: Record<ModuleType, Grid>;          // working grid per module
+  grids: Record<ModuleType, Grid>;
+  moduleSettings: Record<ModuleType, ModuleSettings>;
   timeline: TimelineBlock[];
   timelineOpen: boolean;
   bpm: number;
 
   setActiveModule: (m: ModuleType) => void;
+  setModuleSettings: (module: ModuleType, settings: Partial<ModuleSettings>) => void;
   setActivePattern: (module: ModuleType, id: PatternId) => void;
   toggleVault: (module: ModuleType) => void;
   addPattern: (module: ModuleType) => void;
@@ -106,6 +113,7 @@ function seedPattern(module: ModuleType, index: number): Pattern {
 
 const initialVaults: Record<ModuleType, ModuleVault> = {} as Record<ModuleType, ModuleVault>;
 const initialGrids: Record<ModuleType, Grid> = {} as Record<ModuleType, Grid>;
+const initialModuleSettings: Record<ModuleType, ModuleSettings> = {} as Record<ModuleType, ModuleSettings>;
 
 for (const m of MODULES) {
   const vault = defaultVault();
@@ -113,6 +121,7 @@ for (const m of MODULES) {
   vault.activePatternId = vault.patterns[0].id;
   initialVaults[m] = vault;
   initialGrids[m] = emptyGrid();
+  initialModuleSettings[m] = { res: 0.05, pan: 0.5 };
 }
 
 const STORAGE_KEY = 'beatdown-session-v1';
@@ -127,6 +136,7 @@ export const useStore = create<AppState>()(
   activeModule: 'drum',
   vaults: initialVaults,
   grids: initialGrids,
+  moduleSettings: initialModuleSettings,
   timeline: [],
   timelineOpen: true,
   bpm: 120,
@@ -321,6 +331,13 @@ export const useStore = create<AppState>()(
   toggleTimeline: () => set((s) => ({ timelineOpen: !s.timelineOpen })),
 
   setBpm: (bpm) => set({ bpm }),
+  setModuleSettings: (module, settings) =>
+    set((s) => ({
+      moduleSettings: {
+        ...s.moduleSettings,
+        [module]: { ...s.moduleSettings[module], ...settings },
+      },
+    })),
 
   renamePattern: (module, id, name) =>
     set((s) => {
@@ -354,6 +371,7 @@ export const useStore = create<AppState>()(
           vaults: s.vaults,
           timeline: s.timeline,
           bpm: s.bpm,
+          moduleSettings: s.moduleSettings,
         }),
       }
     ),
