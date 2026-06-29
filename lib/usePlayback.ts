@@ -43,11 +43,12 @@ export function usePlayback() {
   patternTickRef.current = () => {
     const step = patternStepRef.current % GRID_STEPS;
     setPlayhead(step);
-    const grids = useStore.getState().grids;
-    for (const module of MODULES) {
-      for (let row = 0; row < GRID_ROWS; row++) {
-        if (grids[module][row][step]) audioEngine.preview(module, SCALE_FREQS[module][row]);
-      }
+    // Play only the active module's working grid — pattern play is per-instrument
+    const state = useStore.getState();
+    const module = state.activeModule;
+    const grid = state.grids[module];
+    for (let row = 0; row < GRID_ROWS; row++) {
+      if (grid[row][step]) audioEngine.preview(module, SCALE_FREQS[module][row]);
     }
     patternStepRef.current += 1;
   };

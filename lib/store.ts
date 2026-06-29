@@ -214,11 +214,17 @@ export const useStore = create<AppState>((set, get) => ({
     set((s) => {
       const vault = s.vaults[module];
       if (!vault.activePatternId) return s;
-      const pattern = vault.patterns.find((p) => p.id === vault.activePatternId);
-      if (!pattern) return s;
-      const durationSec = (pattern.data.durationBeats / s.bpm) * 60;
+
+      // Flush working grid into the active pattern before placing
+      const flushedPatterns = vault.patterns.map((p) =>
+        p.id === vault.activePatternId
+          ? { ...p, grid: s.grids[module].map((r) => [...r]) }
+          : p
+      );
+      const flushedPattern = flushedPatterns.find((p) => p.id === vault.activePatternId)!;
+
+      const durationSec = (flushedPattern.data.durationBeats / s.bpm) * 60;
       if (startSec + durationSec > MAX_ARRANGEMENT_SEC) return s;
-      // prevent overlap on same module row
       const overlaps = s.timeline.some(
         (b) =>
           b.moduleType === module &&
@@ -232,7 +238,10 @@ export const useStore = create<AppState>((set, get) => ({
         startSec,
         durationSec,
       };
-      return { timeline: [...s.timeline, block] };
+      return {
+        timeline: [...s.timeline, block],
+        vaults: { ...s.vaults, [module]: { ...vault, patterns: flushedPatterns } },
+      };
     }),
 
   deletePattern: (module, id) =>
