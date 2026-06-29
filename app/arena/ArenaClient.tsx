@@ -27,9 +27,9 @@ const TRACK_COLORS = { a: '#74b9f3', b: '#ffb300' };
 
 const HOW_IT_WORKS = [
   { step: '1 · MAKE',    desc: 'Compose a beat in the Studio using all 5 modules.' },
-  { step: '2 · SUBMIT',  desc: 'Hit SUBMIT, give it a title. It enters the queue.' },
-  { step: '3 · BATTLE',  desc: "You're paired blind against another producer." },
-  { step: '4 · WIN ELO', desc: 'After 3 votes the winner gains ELO. Leaderboard updates.' },
+  { step: '2 · VOTE',    desc: 'Vote on 3 tracks here in the Arena. This unlocks your ability to submit.' },
+  { step: '3 · SUBMIT',  desc: 'Head to Studio, hit SUBMIT, give your track a title.' },
+  { step: '4 · WIN ELO', desc: "You're paired blind. After 3 votes the winner gains ELO." },
 ];
 
 export default function ArenaClient({ user, profile, matches, userVotes }: Props) {

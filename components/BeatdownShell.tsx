@@ -19,6 +19,7 @@ export default function BeatdownShell() {
   const vaultOpen = useStore((s) => s.vaults[activeModule].vaultOpen);
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [votesCast, setVotesCast] = useState<number | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
 
   const { isPlaying, playhead, toggle, arrIsPlaying, timelineSec, arrLoop, setArrLoop, toggleArr, seekArr, returnToStart } = usePlayback();
@@ -31,8 +32,9 @@ export default function BeatdownShell() {
       const { data } = await supabase.auth.getUser();
       setUser(data.user);
       if (data.user) {
-        const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', data.user.id).single() as any;
+        const { data: profile } = await supabase.from('profiles').select('is_admin, votes_cast').eq('id', data.user.id).single() as any;
         setIsAdmin(profile?.is_admin ?? false);
+        setVotesCast(profile?.votes_cast ?? 0);
       }
     };
     loadUser();
@@ -59,6 +61,7 @@ export default function BeatdownShell() {
         onSubmit={() => setSubmitOpen(true)}
         user={user}
         isAdmin={isAdmin}
+        votesCast={votesCast}
       />
 
       {/* Module Tabs */}

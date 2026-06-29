@@ -2,13 +2,17 @@
 import ProfileButton from './ProfileButton';
 import type { User } from '@supabase/supabase-js';
 
+const VOTES_REQUIRED = 3;
+
 interface Props {
   onSubmit: () => void;
   user: User | null;
   isAdmin?: boolean;
+  votesCast?: number | null;
 }
 
-export default function TransportBar({ onSubmit, user, isAdmin = false }: Props) {
+export default function TransportBar({ onSubmit, user, isAdmin = false, votesCast = null }: Props) {
+  const gateBlocked = user !== null && votesCast !== null && votesCast < VOTES_REQUIRED;
 
   return (
     <div
@@ -74,22 +78,33 @@ export default function TransportBar({ onSubmit, user, isAdmin = false }: Props)
 
       {/* Submit */}
       <button
-        onClick={onSubmit}
+        onClick={gateBlocked ? undefined : onSubmit}
+        title={gateBlocked ? `Vote on ${VOTES_REQUIRED - (votesCast ?? 0)} more track${VOTES_REQUIRED - (votesCast ?? 0) !== 1 ? 's' : ''} in the Arena to unlock` : undefined}
         style={{
           padding: '0 18px',
-          background: '#e8212b',
+          background: gateBlocked ? '#888' : '#e8212b',
           color: '#fff',
           fontFamily: 'monospace',
           fontWeight: 900,
           fontSize: 10,
           letterSpacing: 2,
-          cursor: 'pointer',
+          cursor: gateBlocked ? 'not-allowed' : 'pointer',
           border: 'none',
           borderLeft: '3px solid #000',
           flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
         }}
       >
-        SUBMIT
+        <span>SUBMIT</span>
+        {gateBlocked && (
+          <span style={{ fontSize: 7, letterSpacing: 1, opacity: 0.85 }}>
+            VOTE {votesCast}/{VOTES_REQUIRED} FIRST
+          </span>
+        )}
       </button>
 
       {/* Profile */}
