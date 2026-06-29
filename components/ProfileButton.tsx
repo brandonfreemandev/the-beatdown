@@ -99,12 +99,10 @@ export default function ProfileButton({ user }: Props) {
     setOpen(false);
   };
 
-  const avatarUrl: string | undefined = user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture;
-
   const Avatar = () => (
     <div style={{
       width: 28, height: 28, borderRadius: '50%',
-      overflow: 'hidden', flexShrink: 0,
+      flexShrink: 0,
       border: '2px solid #000',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: user ? '#000' : '#f9f9f7',
@@ -113,12 +111,7 @@ export default function ProfileButton({ user }: Props) {
       cursor: 'pointer',
       userSelect: 'none',
     }}>
-      {user
-        ? avatarUrl
-          ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : getInitials(user)
-        : <span style={{ color: '#000', fontSize: 9, fontWeight: 700 }}>IN</span>
-      }
+      {user ? getInitials(user) : <span style={{ color: '#000', fontSize: 9, fontWeight: 700 }}>IN</span>}
     </div>
   );
 
