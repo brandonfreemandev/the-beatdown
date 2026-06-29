@@ -13,83 +13,71 @@ const SCALE_FREQS: Record<ModuleType, number[]> = {
 };
 
 export function usePlayback() {
-  // Pattern-loop mode
   const [isPlaying, setIsPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(-1);
-  const patternStepRef = useRef(0);
-  const patternTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Arrangement mode
   const [arrIsPlaying, setArrIsPlaying] = useState(false);
   const [timelineSec, setTimelineSec] = useState(-1);
   const [arrLoop, setArrLoop] = useState(false);
-  const arrStepRef = useRef(0);
-  const arrTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const arrLoopRef = useRef(false);
 
-  // Keep arrLoopRef in sync so the interval closure sees current value
-  useEffect(() => { arrLoopRef.current = arrLoop; }, [arrLoop]);
-
+  // Refs for values that interval closures must read without going stale
   const bpm = useStore((s) => s.bpm);
+  const bpmRef = useRef(bpm);
+  const arrLoopRef = useRef(false);
+  const isPlayingRef = useRef(false);
+  const arrIsPlayingRef = useRef(false);
+  const patternStepRef = useRef(0);
+  const arrStepRef = useRef(0);
+  const patternTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const arrTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const msPerStep = useCallback(() => (60 / bpm / 4) * 1000, [bpm]);
+  // Keep all refs in sync with state/props every render
+  bpmRef.current = bpm;
+  arrLoopRef.current = arrLoop;
+  isPlayingRef.current = isPlaying;
+  arrIsPlayingRef.current = arrIsPlaying;
 
-  // ── Pattern tick ─────────────────────────────────────────────────────────
-  const patternTick = useCallback(() => {
+  const getMsPerStep = () => (60 / bpmRef.current / 4) * 1000;
+
+  // ── Tick functions stored in refs so the interval always calls the latest version ──
+  const patternTickRef = useRef(() => {});
+  patternTickRef.current = () => {
     const step = patternStepRef.current % GRID_STEPS;
     setPlayhead(step);
-
     const grids = useStore.getState().grids;
     for (const module of MODULES) {
-      const grid = grids[module];
       for (let row = 0; row < GRID_ROWS; row++) {
-        if (grid[row][step]) audioEngine.preview(module, SCALE_FREQS[module][row]);
+        if (grids[module][row][step]) audioEngine.preview(module, SCALE_FREQS[module][row]);
       }
     }
     patternStepRef.current += 1;
-  }, []);
+  };
 
-  const startPattern = useCallback(() => {
-    audioEngine.resume();
-    patternStepRef.current = 0;
-    patternTimerRef.current = setInterval(patternTick, msPerStep());
-  }, [patternTick, msPerStep]);
-
-  const stopPattern = useCallback(() => {
-    if (patternTimerRef.current) clearInterval(patternTimerRef.current);
-    setPlayhead(-1);
-  }, []);
-
-  const toggle = useCallback(() => {
-    if (isPlaying) { stopPattern(); setIsPlaying(false); }
-    else {
-      if (arrIsPlaying) { stopArr(); setArrIsPlaying(false); }
-      startPattern(); setIsPlaying(true);
-    }
-  }, [isPlaying, arrIsPlaying]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Arrangement tick ─────────────────────────────────────────────────────
-  const arrTick = useCallback(() => {
-    const secPerStep = (60 / bpm / 4);
+  const arrTickRef = useRef(() => {});
+  arrTickRef.current = () => {
+    const secPerStep = 60 / bpmRef.current / 4;
     const sec = arrStepRef.current * secPerStep;
 
-    if (sec >= 60) {
+    // Loop ends at the last block's end time (not necessarily 60s)
+    const state = useStore.getState();
+    const lastEnd = state.timeline.reduce(
+      (max, b) => Math.max(max, b.startSec + b.durationSec), 0
+    );
+    const endSec = lastEnd > 0 ? lastEnd : 60;
+
+    if (sec >= endSec) {
       if (arrLoopRef.current) {
         arrStepRef.current = 0;
         setTimelineSec(0);
         return;
-      } else {
-        if (arrTimerRef.current) clearInterval(arrTimerRef.current);
-        setArrIsPlaying(false);
-        setTimelineSec(-1);
-        return;
       }
+      if (arrTimerRef.current) { clearInterval(arrTimerRef.current); arrTimerRef.current = null; }
+      setArrIsPlaying(false);
+      arrIsPlayingRef.current = false;
+      setTimelineSec(-1);
+      return;
     }
 
     setTimelineSec(sec);
-
-    const state = useStore.getState();
-    const step = arrStepRef.current % GRID_STEPS;
 
     for (const module of MODULES) {
       const block = state.timeline.find(
@@ -98,7 +86,6 @@ export function usePlayback() {
       if (!block) continue;
       const pattern = state.vaults[module].patterns.find((p) => p.id === block.patternId);
       if (!pattern) continue;
-      // step within this pattern block
       const localStep = Math.floor((sec - block.startSec) / secPerStep) % GRID_STEPS;
       for (let row = 0; row < GRID_ROWS; row++) {
         if (pattern.grid[row][localStep]) audioEngine.preview(module, SCALE_FREQS[module][row]);
@@ -106,36 +93,65 @@ export function usePlayback() {
     }
 
     arrStepRef.current += 1;
-  }, [bpm]);
+  };
+
+  // ── Stable start/stop helpers ─────────────────────────────────────────────
+  const startPattern = useCallback(() => {
+    audioEngine.resume();
+    patternStepRef.current = 0;
+    if (patternTimerRef.current) clearInterval(patternTimerRef.current);
+    patternTimerRef.current = setInterval(() => patternTickRef.current(), getMsPerStep());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const stopPattern = useCallback(() => {
+    if (patternTimerRef.current) { clearInterval(patternTimerRef.current); patternTimerRef.current = null; }
+    setPlayhead(-1);
+  }, []);
 
   const startArr = useCallback(() => {
     audioEngine.resume();
     arrStepRef.current = 0;
-    arrTimerRef.current = setInterval(arrTick, msPerStep());
-  }, [arrTick, msPerStep]);
+    if (arrTimerRef.current) clearInterval(arrTimerRef.current);
+    arrTimerRef.current = setInterval(() => arrTickRef.current(), getMsPerStep());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const stopArr = useCallback(() => {
-    if (arrTimerRef.current) clearInterval(arrTimerRef.current);
+    if (arrTimerRef.current) { clearInterval(arrTimerRef.current); arrTimerRef.current = null; }
     setTimelineSec(-1);
   }, []);
 
-  const toggleArr = useCallback(() => {
-    if (arrIsPlaying) { stopArr(); setArrIsPlaying(false); }
-    else {
-      if (isPlaying) { stopPattern(); setIsPlaying(false); }
-      startArr(); setArrIsPlaying(true);
+  // ── Public toggles — read from refs so they're never stale ───────────────
+  const toggle = useCallback(() => {
+    if (isPlayingRef.current) {
+      stopPattern();
+      setIsPlaying(false);
+    } else {
+      if (arrIsPlayingRef.current) { stopArr(); setArrIsPlaying(false); }
+      startPattern();
+      setIsPlaying(true);
     }
-  }, [arrIsPlaying, isPlaying]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [startPattern, stopPattern, stopArr]);
 
-  // Re-sync intervals on BPM change
-  useEffect(() => {
-    if (isPlaying) {
-      if (patternTimerRef.current) clearInterval(patternTimerRef.current);
-      patternTimerRef.current = setInterval(patternTick, msPerStep());
+  const toggleArr = useCallback(() => {
+    if (arrIsPlayingRef.current) {
+      stopArr();
+      setArrIsPlaying(false);
+    } else {
+      if (isPlayingRef.current) { stopPattern(); setIsPlaying(false); }
+      startArr();
+      setArrIsPlaying(true);
     }
-    if (arrIsPlaying) {
-      if (arrTimerRef.current) clearInterval(arrTimerRef.current);
-      arrTimerRef.current = setInterval(arrTick, msPerStep());
+  }, [startArr, stopArr, stopPattern]);
+
+  // Re-sync interval speed on BPM change while playing
+  useEffect(() => {
+    if (patternTimerRef.current) {
+      clearInterval(patternTimerRef.current);
+      patternTimerRef.current = setInterval(() => patternTickRef.current(), getMsPerStep());
+    }
+    if (arrTimerRef.current) {
+      clearInterval(arrTimerRef.current);
+      arrTimerRef.current = setInterval(() => arrTickRef.current(), getMsPerStep());
     }
   }, [bpm]); // eslint-disable-line react-hooks/exhaustive-deps
 
