@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { audioEngine } from '@/lib/audioEngine';
 import { MODULE_COLORS, GRID_ROWS, GRID_STEPS, useStore } from '@/lib/store';
 import type { ModuleType } from '@/lib/audioEngine';
@@ -12,6 +12,8 @@ const SCALE_FREQS: Record<ModuleType, number[]> = {
   arp:   [440, 493.9, 523.2, 587.3, 659.3, 739.9, 830.6, 880],
 };
 
+const DRUM_LABELS = ['Kick', 'Kick 2', 'Snare', 'Snare 2', 'Ghost', 'Hi-Hat', 'Hi-Hat 2', 'Open Hat'];
+
 interface Props {
   module: ModuleType;
   playhead: number;
@@ -21,6 +23,7 @@ export default function StepSequencer({ module, playhead }: Props) {
   const grid = useStore((s) => s.grids[module]);
   const toggleCell = useStore((s) => s.toggleCell);
   const color = MODULE_COLORS[module];
+  const [hoveredRow, setHoveredRow] = useState(-1);
 
   const toggle = (row: number, col: number) => {
     toggleCell(module, row, col);
@@ -42,17 +45,42 @@ export default function StepSequencer({ module, playhead }: Props) {
 
   return (
     <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 3,
-        width: '100%',
-        height: '100%',
-        minHeight: 0,
-      }}
+      style={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%', height: '100%', minHeight: 0, position: 'relative' }}
     >
+      {/* Drum row label — appears at right edge on hover */}
+      {module === 'drum' && hoveredRow >= 0 && (
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: `calc(${(hoveredRow / GRID_ROWS) * 100}% + ${hoveredRow * 3}px)`,
+          height: `calc(${(1 / GRID_ROWS) * 100}%)`,
+          display: 'flex',
+          alignItems: 'center',
+          pointerEvents: 'none',
+          zIndex: 20,
+        }}>
+          <span style={{
+            background: '#000',
+            color: '#f9f9f7',
+            fontFamily: 'monospace',
+            fontSize: 8,
+            fontWeight: 700,
+            letterSpacing: 1,
+            padding: '2px 6px',
+            whiteSpace: 'nowrap',
+          }}>
+            {DRUM_LABELS[hoveredRow]}
+          </span>
+        </div>
+      )}
+
       {Array.from({ length: GRID_ROWS }, (_, ri) => (
-        <div key={ri} style={{ display: 'flex', gap: 3, flex: 1, minHeight: 0 }}>
+        <div
+          key={ri}
+          style={{ display: 'flex', gap: 3, flex: 1, minHeight: 0 }}
+          onMouseEnter={() => module === 'drum' && setHoveredRow(ri)}
+          onMouseLeave={() => module === 'drum' && setHoveredRow(-1)}
+        >
           {groups.map((group, gi) => (
             <div
               key={gi}
