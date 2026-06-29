@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { temporal } from 'zundo';
+import { persist } from 'zustand/middleware';
 import type { ModuleType, SequenceData } from './audioEngine';
 
 export const MODULE_COLORS: Record<ModuleType, string> = {
@@ -73,6 +75,7 @@ interface AppState {
   toggleTimeline: () => void;
   setBpm: (bpm: number) => void;
   renamePattern: (module: ModuleType, id: PatternId, name: string) => void;
+  clearSession: () => void;
 }
 
 function defaultVault(): ModuleVault {
@@ -112,7 +115,15 @@ for (const m of MODULES) {
   initialGrids[m] = emptyGrid();
 }
 
-export const useStore = create<AppState>((set, get) => ({
+const STORAGE_KEY = 'beatdown-session-v1';
+
+// Which state slices are tracked by undo (cells + timeline only — not BPM/knobs/UI)
+type UndoPartial = Pick<AppState, 'grids' | 'vaults' | 'timeline'>;
+
+export const useStore = create<AppState>()(
+  temporal(
+    persist(
+      (set, get) => ({
   activeModule: 'drum',
   vaults: initialVaults,
   grids: initialGrids,
@@ -319,4 +330,41 @@ export const useStore = create<AppState>((set, get) => ({
       );
       return { vaults: { ...s.vaults, [module]: { ...vault, patterns } } };
     }),
-}));
+
+  clearSession: () => {
+    const fresh: Record<ModuleType, ModuleVault> = {} as Record<ModuleType, ModuleVault>;
+    const freshGrids: Record<ModuleType, Grid> = {} as Record<ModuleType, Grid>;
+    for (const m of MODULES) {
+      const vault = defaultVault();
+      vault.patterns = [seedPattern(m, 0), seedPattern(m, 1)];
+      vault.activePatternId = vault.patterns[0].id;
+      fresh[m] = vault;
+      freshGrids[m] = emptyGrid();
+    }
+    set({ vaults: fresh, grids: freshGrids, timeline: [], bpm: 120, activeModule: 'drum' });
+    useStore.temporal.getState().clear();
+    localStorage.removeItem(STORAGE_KEY);
+  },
+      }),
+      {
+        name: STORAGE_KEY,
+        // Persist everything except transient UI state
+        partialize: (s) => ({
+          grids: s.grids,
+          vaults: s.vaults,
+          timeline: s.timeline,
+          bpm: s.bpm,
+        }),
+      }
+    ),
+    {
+      // Only track these slices in undo history
+      partialize: (s): UndoPartial => ({
+        grids: s.grids,
+        vaults: s.vaults,
+        timeline: s.timeline,
+      }),
+      limit: 40,
+    }
+  )
+);

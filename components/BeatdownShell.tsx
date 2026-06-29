@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { audioEngine } from '@/lib/audioEngine';
 import { usePlayback } from '@/lib/usePlayback';
+import { useUndoShortcuts } from '@/lib/useUndoShortcuts';
 import { useStore, MODULE_COLORS, MODULE_LABELS, MODULES } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
 import TransportBar from './TransportBar';
@@ -20,6 +21,7 @@ export default function BeatdownShell() {
   const [submitOpen, setSubmitOpen] = useState(false);
 
   const { isPlaying, playhead, toggle, arrIsPlaying, timelineSec, arrLoop, setArrLoop, toggleArr, seekArr, returnToStart } = usePlayback();
+  useUndoShortcuts();
 
   useEffect(() => {
     audioEngine.init();
