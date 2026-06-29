@@ -33,6 +33,22 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
   const [voted, setVoted] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [matchmaking, setMatchmaking] = useState(false);
+  const [matchmakeResult, setMatchmakeResult] = useState('');
+
+  const runMatchmaker = async () => {
+    setMatchmaking(true);
+    setMatchmakeResult('');
+    const res = await fetch('/api/matchmaker', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      setMatchmakeResult(`✓ ${data.pairs} match${data.pairs !== 1 ? 'es' : ''} created`);
+      router.refresh();
+    } else {
+      setMatchmakeResult(`✗ ${data.error ?? 'Failed'}`);
+    }
+    setMatchmaking(false);
+  };
 
   const castVote = async (matchId: string, votedForId: string) => {
     if (!user) return;
@@ -97,6 +113,29 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
         {!user && (
           <div style={{ border: '2px solid #000', padding: '16px', marginBottom: 32, fontFamily: 'monospace', fontSize: 12 }}>
             Sign in to cast votes and unlock submission rights.
+          </div>
+        )}
+
+        {/* Matchmaker — visible to signed-in users */}
+        {user && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
+            <button
+              onClick={runMatchmaker}
+              disabled={matchmaking}
+              style={{
+                background: '#000', color: '#f9f9f7', border: 'none',
+                fontFamily: 'monospace', fontWeight: 700, fontSize: 10, letterSpacing: 2,
+                padding: '10px 20px', cursor: matchmaking ? 'wait' : 'pointer',
+                opacity: matchmaking ? 0.6 : 1,
+              }}
+            >
+              {matchmaking ? 'MATCHING...' : '⚡ RUN MATCHMAKER'}
+            </button>
+            {matchmakeResult && (
+              <span style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: 1 }}>
+                {matchmakeResult}
+              </span>
+            )}
           </div>
         )}
 
