@@ -95,7 +95,7 @@ export default function ModuleControls({ module, playhead, isPlaying, onTogglePl
             style={{
               height: 36,
               padding: '0 18px',
-              background: isPlaying ? '#000' : color,
+              background: isPlaying ? '#000' : '#f9f9f7',
               color: isPlaying ? '#f9f9f7' : '#000',
               fontFamily: 'monospace',
               fontWeight: 700,
