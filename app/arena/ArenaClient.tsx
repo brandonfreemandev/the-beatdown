@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ArenaPlayer from '@/components/ArenaPlayer';
+import SiteHeader from '@/components/SiteHeader';
 import type { Profile } from '@/lib/supabase/types';
 import type { User } from '@supabase/supabase-js';
 
@@ -70,29 +71,7 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
 
   return (
     <div style={BD}>
-      {/* Nav */}
-      <div style={HEADER}>
-        <a href="/" style={{ color: '#f9f9f7', fontWeight: 900, fontSize: 13, letterSpacing: 3, textDecoration: 'none' }}>
-          THE BEATDOWN
-        </a>
-        <nav style={{ display: 'flex', gap: 0 }}>
-          {['STUDIO', 'ARENA', 'LEADERBOARD'].map((page) => (
-            <a
-              key={page}
-              href={page === 'STUDIO' ? '/' : `/${page.toLowerCase()}`}
-              style={{
-                color: page === 'ARENA' ? '#000' : '#f9f9f7',
-                background: page === 'ARENA' ? '#f9f9f7' : 'transparent',
-                fontFamily: 'monospace', fontWeight: 700, fontSize: 10, letterSpacing: 2,
-                padding: '0 16px', height: 48, display: 'flex', alignItems: 'center',
-                textDecoration: 'none', borderLeft: '2px solid #333',
-              }}
-            >
-              {page}
-            </a>
-          ))}
-        </nav>
-      </div>
+      <SiteHeader currentPage="arena" user={user} />
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: 32 }}>
         {/* Gatekeeper status */}

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import SiteHeader from '@/components/SiteHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,12 +14,6 @@ export default async function LeaderboardPage() {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const HEADER: React.CSSProperties = {
-    background: '#000', color: '#f9f9f7', padding: '0 24px',
-    height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    borderBottom: '3px solid #000',
-  };
-
   const tierLabel = (elo: number) => {
     if (elo >= 1400) return { label: 'CHAMPION', color: '#ffb300' };
     if (elo >= 1200) return { label: 'VETERAN', color: '#6abf3a' };
@@ -28,32 +23,15 @@ export default async function LeaderboardPage() {
 
   return (
     <div style={{ fontFamily: 'monospace', background: '#f9f9f7', minHeight: '100vh', color: '#000' }}>
-      <div style={HEADER}>
-        <a href="/" style={{ color: '#f9f9f7', fontWeight: 900, fontSize: 13, letterSpacing: 3, textDecoration: 'none' }}>
-          THE BEATDOWN
-        </a>
-        <nav style={{ display: 'flex' }}>
-          {['STUDIO', 'ARENA', 'LEADERBOARD'].map((page) => (
-            <a
-              key={page}
-              href={page === 'STUDIO' ? '/' : `/${page.toLowerCase()}`}
-              style={{
-                color: page === 'LEADERBOARD' ? '#000' : '#f9f9f7',
-                background: page === 'LEADERBOARD' ? '#f9f9f7' : 'transparent',
-                fontFamily: 'monospace', fontWeight: 700, fontSize: 10, letterSpacing: 2,
-                padding: '0 16px', height: 48, display: 'flex', alignItems: 'center',
-                textDecoration: 'none', borderLeft: '2px solid #333',
-              }}
-            >
-              {page}
-            </a>
-          ))}
-        </nav>
-      </div>
+      <SiteHeader currentPage="leaderboard" user={user} />
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: 32 }}>
         <div style={{ border: '3px solid #000' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 80px 80px 100px', background: '#000', color: '#f9f9f7', padding: '10px 16px', fontSize: 9, letterSpacing: 2, fontWeight: 700 }}>
+          <div style={{
+            display: 'grid', gridTemplateColumns: '48px 1fr 80px 80px 100px',
+            background: '#000', color: '#f9f9f7',
+            padding: '10px 16px', fontSize: 9, letterSpacing: 2, fontWeight: 700,
+          }}>
             <span>#</span><span>PRODUCER</span>
             <span style={{ textAlign: 'right' }}>ELO</span>
             <span style={{ textAlign: 'right' }}>VOTES</span>
