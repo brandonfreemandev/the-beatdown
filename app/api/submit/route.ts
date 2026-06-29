@@ -13,11 +13,19 @@ export async function POST(request: Request) {
 
   const service = await createServiceClient();
 
-  // Ensure profile row exists (trigger may not have fired on OAuth signup)
-  await (service.from('profiles') as any).upsert(
-    { id: user.id, username: user.user_metadata?.full_name ?? user.email ?? 'Anonymous' },
-    { onConflict: 'id', ignoreDuplicates: true }
-  );
+  // Ensure profile row exists — trigger may not have fired on OAuth signup
+  const { data: existingProfile } = await (service.from('profiles') as any)
+    .select('id').eq('id', user.id).maybeSingle();
+  if (!existingProfile) {
+    const { error: profileErr } = await (service.from('profiles') as any).insert({
+      id: user.id,
+      username: user.user_metadata?.full_name ?? user.email ?? 'Anonymous',
+    });
+    if (profileErr) {
+      console.error('Profile creation failed:', profileErr);
+      return NextResponse.json({ error: 'Could not create user profile' }, { status: 500 });
+    }
+  }
 
   const { data: round } = await service
     .from('rounds')
