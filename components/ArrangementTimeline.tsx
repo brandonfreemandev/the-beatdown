@@ -10,13 +10,14 @@ interface Props {
   arrLoop: boolean;
   onToggleArr: () => void;
   onToggleLoop: () => void;
+  onSeek: (sec: number) => void;
 }
 
 const ROW_HEIGHT = 36;
 const HANDLE_HEIGHT = 28;
 const LABEL_WIDTH = 52;
 
-export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop, onToggleArr, onToggleLoop }: Props) {
+export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop, onToggleArr, onToggleLoop, onSeek }: Props) {
   const timelineOpen = useStore((s) => s.timelineOpen);
   const toggleTimeline = useStore((s) => s.toggleTimeline);
   const timeline = useStore((s) => s.timeline);
@@ -55,6 +56,33 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
     const trackWidth = railRef.current.getBoundingClientRect().width - LABEL_WIDTH;
     return (x / trackWidth) * MAX_ARRANGEMENT_SEC;
   }, []);
+
+  const handlePlayheadDrag = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!railRef.current) return;
+    const rect = railRef.current.getBoundingClientRect();
+    const trackWidth = rect.width - LABEL_WIDTH;
+
+    // Collect seam positions: start and end of every block
+    const state = useStore.getState();
+    const seams = Array.from(
+      new Set([0, ...state.timeline.flatMap((b) => [b.startSec, b.startSec + b.durationSec])])
+    ).sort((a, b) => a - b);
+
+    const snap = (raw: number) =>
+      seams.reduce((best, s) => (Math.abs(s - raw) < Math.abs(best - raw) ? s : best), seams[0] ?? 0);
+
+    const onMove = (mv: MouseEvent) => {
+      const x = Math.max(0, mv.clientX - rect.left - LABEL_WIDTH);
+      onSeek(snap((x / trackWidth) * MAX_ARRANGEMENT_SEC));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [onSeek]);
 
   const handleRowClick = (module: typeof MODULES[number], e: React.MouseEvent<HTMLDivElement>) => {
     const x = getRailX(e);
@@ -203,14 +231,22 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
             ))}
             {timelineSec >= 0 && (
               <div
+                onMouseDown={handlePlayheadDrag}
                 style={{
                   position: 'absolute',
                   left: `${secToPercent(timelineSec)}%`,
-                  top: 0, bottom: 0, width: 2,
-                  background: '#e8212b',
-                  pointerEvents: 'none',
+                  top: 0, bottom: 0, width: 8,
+                  transform: 'translateX(-3px)',
+                  cursor: 'ew-resize',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  zIndex: 20,
                 }}
-              />
+              >
+                {/* Caret handle */}
+                <div style={{ width: 8, height: 8, background: '#e8212b', clipPath: 'polygon(0 0, 100% 0, 50% 100%)', flexShrink: 0 }} />
+                <div style={{ position: 'absolute', left: 3, top: 0, bottom: 0, width: 2, background: '#e8212b' }} />
+              </div>
             )}
           </div>
 

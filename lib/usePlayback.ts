@@ -162,5 +162,11 @@ export function usePlayback() {
     };
   }, []);
 
-  return { isPlaying, playhead, toggle, arrIsPlaying, timelineSec, arrLoop, setArrLoop, toggleArr };
+  const seekArr = useCallback((sec: number) => {
+    const secPerStep = 60 / bpmRef.current / 4;
+    arrStepRef.current = Math.round(sec / secPerStep);
+    setTimelineSec(sec);
+  }, []);
+
+  return { isPlaying, playhead, toggle, arrIsPlaying, timelineSec, arrLoop, setArrLoop, toggleArr, seekArr };
 }

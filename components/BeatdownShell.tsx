@@ -19,7 +19,7 @@ export default function BeatdownShell() {
   const [user, setUser] = useState<User | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
 
-  const { isPlaying, playhead, toggle, arrIsPlaying, timelineSec, arrLoop, setArrLoop, toggleArr } = usePlayback();
+  const { isPlaying, playhead, toggle, arrIsPlaying, timelineSec, arrLoop, setArrLoop, toggleArr, seekArr } = usePlayback();
 
   useEffect(() => {
     audioEngine.init();
@@ -95,7 +95,7 @@ export default function BeatdownShell() {
             flexShrink: 0,
           }}
         >
-          VAULT
+          VAULT {vaultOpen ? '▾' : '▸'}
         </button>
       </div>
 
@@ -113,6 +113,7 @@ export default function BeatdownShell() {
         arrLoop={arrLoop}
         onToggleArr={toggleArr}
         onToggleLoop={() => setArrLoop(!arrLoop)}
+        onSeek={seekArr}
       />
 
       {submitOpen && <SubmitModal user={user} onClose={() => setSubmitOpen(false)} />}

@@ -186,11 +186,20 @@ export const useStore = create<AppState>((set, get) => ({
 
   loadPatternToGrid: (module, id) =>
     set((s) => {
-      const pattern = s.vaults[module].patterns.find((p) => p.id === id);
+      const vault = s.vaults[module];
+      const pattern = vault.patterns.find((p) => p.id === id);
       if (!pattern) return s;
+      // Auto-save current working grid into the currently active pattern before switching
+      const savedPatterns = vault.activePatternId
+        ? vault.patterns.map((p) =>
+            p.id === vault.activePatternId
+              ? { ...p, grid: s.grids[module].map((r) => [...r]) }
+              : p
+          )
+        : vault.patterns;
       return {
         grids: { ...s.grids, [module]: pattern.grid.map((r) => [...r]) },
-        vaults: { ...s.vaults, [module]: { ...s.vaults[module], activePatternId: id } },
+        vaults: { ...s.vaults, [module]: { ...vault, patterns: savedPatterns, activePatternId: id } },
       };
     }),
 
