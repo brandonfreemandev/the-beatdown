@@ -25,6 +25,13 @@ interface Props {
 
 const TRACK_COLORS = { a: '#74b9f3', b: '#ffb300' };
 
+const HOW_IT_WORKS = [
+  { step: '1 · MAKE',    desc: 'Compose a beat in the Studio using all 5 modules.' },
+  { step: '2 · SUBMIT',  desc: 'Hit SUBMIT, give it a title. It enters the queue.' },
+  { step: '3 · BATTLE',  desc: "You're paired blind against another producer." },
+  { step: '4 · WIN ELO', desc: 'After 3 votes the winner gains ELO. Leaderboard updates.' },
+];
+
 export default function ArenaClient({ user, profile, matches, userVotes }: Props) {
   const router = useRouter();
   const [voted, setVoted] = useState<Record<string, string>>({});
@@ -32,6 +39,7 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
   const [error, setError] = useState('');
   const [matchmaking, setMatchmaking] = useState(false);
   const [matchmakeResult, setMatchmakeResult] = useState('');
+  const [howOpen, setHowOpen] = useState(true);
 
   const runMatchmaker = async () => {
     setMatchmaking(true);
@@ -70,6 +78,37 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
       <SiteHeader currentPage="arena" user={user} profile={profile} />
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px' }}>
+
+        {/* How it works */}
+        <div style={{ border: '3px solid #000', marginBottom: 32 }}>
+          <button
+            onClick={() => setHowOpen((o) => !o)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: '#000', color: '#f9f9f7', border: 'none', padding: '10px 16px',
+              cursor: 'pointer', fontFamily: 'monospace',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontWeight: 700, fontSize: 9, letterSpacing: 3 }}>HOW IT WORKS</span>
+              <span style={{ fontSize: 8, fontWeight: 900, letterSpacing: 1, background: '#e8212b', color: '#fff', padding: '2px 6px' }}>NEW HERE?</span>
+            </div>
+            <span style={{ fontSize: 10, color: '#666' }}>{howOpen ? '▲ HIDE' : '▼ SHOW'}</span>
+          </button>
+          {howOpen && (
+            <div style={{ display: 'flex' }}>
+              {HOW_IT_WORKS.map(({ step, desc }, i) => (
+                <div key={step} style={{
+                  flex: 1, padding: '14px 16px',
+                  borderRight: i < 3 ? '3px solid #000' : 'none',
+                }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: 2, fontWeight: 700, marginBottom: 6 }}>{step}</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 10, lineHeight: 1.6, color: '#444' }}>{desc}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Stats bar */}
         {user && profile && (
