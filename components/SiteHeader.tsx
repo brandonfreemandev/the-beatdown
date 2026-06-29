@@ -1,6 +1,5 @@
 'use client';
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import ProfileButton from './ProfileButton';
 import type { User } from '@supabase/supabase-js';
 
 type Page = 'studio' | 'arena' | 'leaderboard';
@@ -11,23 +10,6 @@ interface Props {
 }
 
 export default function SiteHeader({ currentPage, user }: Props) {
-  const [signingIn, setSigningIn] = useState(false);
-  const supabase = createClient();
-
-  const signIn = async () => {
-    setSigningIn(true);
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${location.origin}/auth/callback` },
-    });
-  };
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    location.reload();
-  };
-
-  const userName = user?.user_metadata?.name?.split(' ')[0] ?? 'SIGNED IN';
 
   return (
     <div style={{
@@ -120,27 +102,8 @@ export default function SiteHeader({ currentPage, user }: Props) {
         SUBMIT
       </a>
 
-      {/* Auth */}
-      <button
-        onClick={user ? signOut : signIn}
-        disabled={signingIn}
-        style={{
-          padding: '0 16px',
-          background: user ? '#000' : 'transparent',
-          color: user ? '#f9f9f7' : '#000',
-          fontFamily: 'monospace',
-          fontWeight: 700,
-          fontSize: 9,
-          letterSpacing: 2,
-          cursor: 'pointer',
-          border: 'none',
-          borderLeft: '3px solid #000',
-          flexShrink: 0,
-          opacity: signingIn ? 0.5 : 1,
-        }}
-      >
-        {user ? userName : 'SIGN IN'}
-      </button>
+      {/* Profile */}
+      <ProfileButton user={user} />
     </div>
   );
 }

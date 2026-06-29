@@ -1,5 +1,5 @@
 'use client';
-import AuthButton from './AuthButton';
+import ProfileButton from './ProfileButton';
 import type { User } from '@supabase/supabase-js';
 
 interface Props {
@@ -91,8 +91,8 @@ export default function TransportBar({ onSubmit, user }: Props) {
         SUBMIT
       </button>
 
-      {/* Auth */}
-      <AuthButton user={user} />
+      {/* Profile */}
+      <ProfileButton user={user} />
     </div>
   );
 }
