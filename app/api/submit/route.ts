@@ -13,6 +13,12 @@ export async function POST(request: Request) {
 
   const service = await createServiceClient();
 
+  // Ensure profile row exists (trigger may not have fired on OAuth signup)
+  await (service.from('profiles') as any).upsert(
+    { id: user.id, username: user.user_metadata?.full_name ?? user.email ?? 'Anonymous' },
+    { onConflict: 'id', ignoreDuplicates: true }
+  );
+
   const { data: round } = await service
     .from('rounds')
     .select('id, entry_count, status')

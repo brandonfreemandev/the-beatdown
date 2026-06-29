@@ -48,7 +48,7 @@ export function usePlayback() {
     const module = state.activeModule;
     const grid = state.grids[module];
     for (let row = 0; row < GRID_ROWS; row++) {
-      if (grid[row][step]) audioEngine.preview(module, SCALE_FREQS[module][row]);
+      if (grid[row][step]) audioEngine.preview(module, SCALE_FREQS[module][row], row);
     }
     patternStepRef.current += 1;
   };
@@ -93,7 +93,7 @@ export function usePlayback() {
         : pattern.grid;
       const localStep = Math.floor((sec - block.startSec) / secPerStep) % GRID_STEPS;
       for (let row = 0; row < GRID_ROWS; row++) {
-        if (grid[row][localStep]) audioEngine.preview(module, SCALE_FREQS[module][row]);
+        if (grid[row][localStep]) audioEngine.preview(module, SCALE_FREQS[module][row], row);
       }
     }
 

@@ -25,7 +25,7 @@ export default function StepSequencer({ module, playhead }: Props) {
   const toggle = (row: number, col: number) => {
     toggleCell(module, row, col);
     if (!grid[row][col]) {
-      audioEngine.preview(module, SCALE_FREQS[module][row]);
+      audioEngine.preview(module, SCALE_FREQS[module][row], row);
     }
   };
 
@@ -33,7 +33,7 @@ export default function StepSequencer({ module, playhead }: Props) {
     if (playhead < 0) return;
     for (let row = 0; row < GRID_ROWS; row++) {
       if (grid[row][playhead]) {
-        audioEngine.preview(module, SCALE_FREQS[module][row]);
+        audioEngine.preview(module, SCALE_FREQS[module][row], row);
       }
     }
   }, [playhead, module, grid]);
