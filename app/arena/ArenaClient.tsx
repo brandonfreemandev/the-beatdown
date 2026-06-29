@@ -66,7 +66,7 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
 
   return (
     <div style={{ fontFamily: 'monospace', background: '#f9f9f7', minHeight: '100vh', color: '#000' }}>
-      <SiteHeader currentPage="arena" user={user} />
+      <SiteHeader currentPage="arena" user={user} profile={profile} />
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px' }}>
 

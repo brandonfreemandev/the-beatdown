@@ -1,15 +1,17 @@
 'use client';
 import ProfileButton from './ProfileButton';
 import type { User } from '@supabase/supabase-js';
+import type { Profile } from '@/lib/supabase/types';
 
 type Page = 'studio' | 'arena' | 'leaderboard';
 
 interface Props {
   currentPage: Page;
   user: User | null;
+  profile?: Profile | null;
 }
 
-export default function SiteHeader({ currentPage, user }: Props) {
+export default function SiteHeader({ currentPage, user, profile }: Props) {
 
   return (
     <div style={{
@@ -103,7 +105,7 @@ export default function SiteHeader({ currentPage, user }: Props) {
       </a>
 
       {/* Profile */}
-      <ProfileButton user={user} />
+      <ProfileButton user={user} isAdmin={profile?.is_admin ?? false} />
     </div>
   );
 }

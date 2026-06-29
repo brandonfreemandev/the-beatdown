@@ -5,9 +5,10 @@ import type { User } from '@supabase/supabase-js';
 interface Props {
   onSubmit: () => void;
   user: User | null;
+  isAdmin?: boolean;
 }
 
-export default function TransportBar({ onSubmit, user }: Props) {
+export default function TransportBar({ onSubmit, user, isAdmin = false }: Props) {
 
   return (
     <div
@@ -92,7 +93,7 @@ export default function TransportBar({ onSubmit, user }: Props) {
       </button>
 
       {/* Profile */}
-      <ProfileButton user={user} />
+      <ProfileButton user={user} isAdmin={isAdmin} />
     </div>
   );
 }

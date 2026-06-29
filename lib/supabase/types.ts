@@ -11,6 +11,7 @@ export interface Database {
           elo_rating: number;
           votes_cast: number;
           submissions_count: number;
+          is_admin: boolean;
           created_at: string;
         };
         Insert: Partial<Database['public']['Tables']['profiles']['Row']> & { id: string };

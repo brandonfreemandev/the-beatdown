@@ -19,17 +19,19 @@ export default async function LeaderboardPage() {
   const [{ data: rankings }, { data: { user } }] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, username, elo_rating, votes_cast, submissions_count')
+      .select('id, username, elo_rating, votes_cast, submissions_count, is_admin')
       .order('elo_rating', { ascending: false })
       .limit(50) as unknown as Promise<{ data: any[] | null }>,
     supabase.auth.getUser(),
   ]);
 
+  const myProfile = rankings?.find((p) => p.id === user?.id) ?? null;
+
   const total = rankings?.length ?? 0;
 
   return (
     <div style={{ fontFamily: 'monospace', background: '#f9f9f7', minHeight: '100vh', color: '#000' }}>
-      <SiteHeader currentPage="leaderboard" user={user} />
+      <SiteHeader currentPage="leaderboard" user={user} profile={myProfile} />
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px' }}>
 

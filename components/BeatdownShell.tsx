@@ -18,6 +18,7 @@ export default function BeatdownShell() {
   const toggleVault = useStore((s) => s.toggleVault);
   const vaultOpen = useStore((s) => s.vaults[activeModule].vaultOpen);
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
 
   const { isPlaying, playhead, toggle, arrIsPlaying, timelineSec, arrLoop, setArrLoop, toggleArr, seekArr, returnToStart } = usePlayback();
@@ -26,9 +27,18 @@ export default function BeatdownShell() {
   useEffect(() => {
     audioEngine.init();
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const loadUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+      if (data.user) {
+        const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', data.user.id).single() as any;
+        setIsAdmin(profile?.is_admin ?? false);
+      }
+    };
+    loadUser();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
+      if (!session?.user) setIsAdmin(false);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -48,6 +58,7 @@ export default function BeatdownShell() {
       <TransportBar
         onSubmit={() => setSubmitOpen(true)}
         user={user}
+        isAdmin={isAdmin}
       />
 
       {/* Module Tabs */}
