@@ -6,13 +6,17 @@ import {
 
 interface Props {
   timelineSec: number;
+  arrIsPlaying: boolean;
+  arrLoop: boolean;
+  onToggleArr: () => void;
+  onToggleLoop: () => void;
 }
 
 const ROW_HEIGHT = 36;
 const HANDLE_HEIGHT = 28;
 const LABEL_WIDTH = 52;
 
-export default function ArrangementTimeline({ timelineSec }: Props) {
+export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop, onToggleArr, onToggleLoop }: Props) {
   const timelineOpen = useStore((s) => s.timelineOpen);
   const toggleTimeline = useStore((s) => s.toggleTimeline);
   const timeline = useStore((s) => s.timeline);
@@ -99,29 +103,80 @@ export default function ArrangementTimeline({ timelineSec }: Props) {
       }}
     >
       {/* Pull-up handle */}
-      <button
-        onClick={toggleTimeline}
+      <div
         style={{
           height: HANDLE_HEIGHT,
           background: '#000',
           color: '#f9f9f7',
-          border: 'none',
-          fontFamily: 'monospace',
-          fontWeight: 700,
-          fontSize: 10,
-          letterSpacing: 3,
-          cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 16px',
           flexShrink: 0,
-          width: '100%',
         }}
       >
-        <span>ARRANGEMENT</span>
-        <span style={{ fontSize: 12 }}>{timelineOpen ? '▼' : '▲'}</span>
-      </button>
+        <button
+          onClick={toggleTimeline}
+          style={{
+            flex: 1,
+            height: '100%',
+            background: 'transparent',
+            color: '#f9f9f7',
+            border: 'none',
+            fontFamily: 'monospace',
+            fontWeight: 700,
+            fontSize: 10,
+            letterSpacing: 3,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '0 16px',
+            textAlign: 'left',
+          }}
+        >
+          <span>ARRANGEMENT</span>
+          <span style={{ fontSize: 12 }}>{timelineOpen ? '▼' : '▲'}</span>
+        </button>
+
+        {/* Arrangement transport */}
+        <div style={{ display: 'flex', alignItems: 'stretch', borderLeft: '2px solid #333', flexShrink: 0 }}>
+          <button
+            onClick={onToggleLoop}
+            title="Toggle arrangement loop"
+            style={{
+              padding: '0 12px',
+              background: arrLoop ? '#f9f9f7' : 'transparent',
+              color: arrLoop ? '#000' : '#f9f9f7',
+              border: 'none',
+              borderRight: '2px solid #333',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              fontSize: 9,
+              letterSpacing: 2,
+              cursor: 'pointer',
+            }}
+          >
+            ⟳ LOOP
+          </button>
+          <button
+            onClick={onToggleArr}
+            title="Play/stop arrangement"
+            style={{
+              padding: '0 16px',
+              background: arrIsPlaying ? '#e8212b' : 'transparent',
+              color: '#f9f9f7',
+              border: 'none',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              fontSize: 9,
+              letterSpacing: 2,
+              cursor: 'pointer',
+            }}
+          >
+            {arrIsPlaying ? '■ STOP ARR' : '▶ PLAY ARR'}
+          </button>
+        </div>
+      </div>
 
       {timelineOpen && (
         <div

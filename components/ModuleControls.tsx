@@ -14,7 +14,6 @@ interface Props {
 
 export default function ModuleControls({ module, playhead, isPlaying, onTogglePlay }: Props) {
   const color = MODULE_COLORS[module];
-  const vaultOpen = useStore((s) => s.vaults[module].vaultOpen);
 
   const [volume, setVolume] = useState(0.7);
   const [cutoff, setCutoff] = useState(0.8);
@@ -74,12 +73,8 @@ export default function ModuleControls({ module, playhead, isPlaying, onTogglePl
         <RotaryKnob label="CUTOFF" value={cutoff} onChange={handleCutoff} color={color} />
         <RotaryKnob label="DECAY" value={decay} onChange={handleDecay} color={color} />
         <RotaryKnob label="ATTACK" value={attack} onChange={handleAttack} color={color} />
-        {!vaultOpen && (
-          <>
-            <RotaryKnob label="RES" value={0.4} onChange={() => {}} color={color} />
-            <RotaryKnob label="PAN" value={0.5} onChange={() => {}} color={color} />
-          </>
-        )}
+        <RotaryKnob label="RES" value={0.4} onChange={() => {}} color={color} />
+        <RotaryKnob label="PAN" value={0.5} onChange={() => {}} color={color} />
 
         {/* Play + BPM — lives here instead of the header row */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', gap: 12, paddingBottom: 2 }}>

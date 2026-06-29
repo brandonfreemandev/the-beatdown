@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { useStore, MODULE_COLORS } from '@/lib/store';
 import type { ModuleType } from '@/lib/audioEngine';
 
@@ -26,7 +27,23 @@ export default function VaultPanel({ module }: Props) {
   const addPattern = useStore((s) => s.addPattern);
   const deletePattern = useStore((s) => s.deletePattern);
   const duplicatePattern = useStore((s) => s.duplicatePattern);
+  const renamePattern = useStore((s) => s.renamePattern);
   const color = MODULE_COLORS[module];
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+
+  const startRename = (id: string, currentName: string) => {
+    setEditingId(id);
+    setEditValue(currentName);
+  };
+
+  const commitRename = () => {
+    if (editingId && editValue.trim()) {
+      renamePattern(module, editingId, editValue.trim().toUpperCase());
+    }
+    setEditingId(null);
+  };
 
   return (
     <div
@@ -75,47 +92,90 @@ export default function VaultPanel({ module }: Props) {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         {vault.patterns.map((p) => {
           const isActive = p.id === vault.activePatternId;
+          const isEditing = editingId === p.id;
           return (
             <div
               key={p.id}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                background: isActive ? '#fff' : color,
-                borderBottom: '2px solid #000',
+                background: isActive ? 'rgba(0,0,0,0.07)' : '#f9f9f7',
+                borderBottom: isActive ? '3px solid #000' : '2px solid #000',
                 minHeight: 36,
+                position: 'relative',
               }}
             >
-              {/* Pattern name — click to load */}
+              {/* Active indicator stripe */}
+              {isActive && (
+                <div style={{ width: 3, alignSelf: 'stretch', background: color, flexShrink: 0 }} />
+              )}
+              {!isActive && (
+                <div style={{ width: 3, alignSelf: 'stretch', flexShrink: 0 }} />
+              )}
+
+              {/* Pattern name — click to load, double-click to rename */}
               <button
                 onClick={() => loadPatternToGrid(module, p.id)}
+                onDoubleClick={() => startRename(p.id, p.data.patternName)}
+                title="Click to load · Double-click to rename"
                 style={{
                   flex: 1,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  padding: '8px 10px',
+                  padding: '8px 8px',
                   background: 'transparent',
                   border: 'none',
                   fontFamily: 'monospace',
-                  fontWeight: 700,
+                  fontWeight: isActive ? 900 : 700,
                   fontSize: 11,
                   letterSpacing: 1,
                   cursor: 'pointer',
                   textAlign: 'left',
                   color: '#000',
+                  minWidth: 0,
                 }}
               >
                 <span
                   style={{
                     width: 7, height: 7,
-                    background: isActive ? '#000' : 'transparent',
-                    border: '2px solid #000',
+                    background: isActive ? color : 'transparent',
+                    border: `2px solid ${isActive ? color : '#000'}`,
                     display: 'inline-block',
                     flexShrink: 0,
                   }}
                 />
-                {p.data.patternName}
+                {isEditing ? (
+                  <input
+                    autoFocus
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={commitRename}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') commitRename();
+                      if (e.key === 'Escape') setEditingId(null);
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      fontFamily: 'monospace',
+                      fontWeight: 900,
+                      fontSize: 11,
+                      letterSpacing: 1,
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: '2px solid #000',
+                      outline: 'none',
+                      width: '100%',
+                      color: '#000',
+                      padding: 0,
+                    }}
+                  />
+                ) : (
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {p.data.patternName}
+                  </span>
+                )}
               </button>
 
               {/* Action buttons */}
@@ -172,7 +232,7 @@ export default function VaultPanel({ module }: Props) {
       </div>
 
       <div style={{ padding: '6px 12px', borderTop: '3px solid #000', fontFamily: 'monospace', fontSize: 9, color: '#666', letterSpacing: 1 }}>
-        {vault.patterns.length}/5 PATTERNS
+        {vault.patterns.length}/5 PATTERNS · DOUBLE-CLICK TO RENAME
       </div>
     </div>
   );

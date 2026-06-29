@@ -19,7 +19,7 @@ export default function BeatdownShell() {
   const [user, setUser] = useState<User | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
 
-  const { isPlaying, playhead, timelineSec, toggle } = usePlayback();
+  const { isPlaying, playhead, toggle, arrIsPlaying, timelineSec, arrLoop, setArrLoop, toggleArr } = usePlayback();
 
   useEffect(() => {
     audioEngine.init();
@@ -107,7 +107,13 @@ export default function BeatdownShell() {
         {vaultOpen && <VaultPanel module={activeModule} />}
       </div>
 
-      <ArrangementTimeline timelineSec={timelineSec} />
+      <ArrangementTimeline
+        timelineSec={timelineSec}
+        arrIsPlaying={arrIsPlaying}
+        arrLoop={arrLoop}
+        onToggleArr={toggleArr}
+        onToggleLoop={() => setArrLoop(!arrLoop)}
+      />
 
       {submitOpen && <SubmitModal user={user} onClose={() => setSubmitOpen(false)} />}
     </div>

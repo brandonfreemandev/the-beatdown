@@ -72,6 +72,7 @@ interface AppState {
   moveBlock: (blockId: string, newStartSec: number) => void;
   toggleTimeline: () => void;
   setBpm: (bpm: number) => void;
+  renamePattern: (module: ModuleType, id: PatternId, name: string) => void;
 }
 
 function defaultVault(): ModuleVault {
@@ -291,4 +292,13 @@ export const useStore = create<AppState>((set, get) => ({
   toggleTimeline: () => set((s) => ({ timelineOpen: !s.timelineOpen })),
 
   setBpm: (bpm) => set({ bpm }),
+
+  renamePattern: (module, id, name) =>
+    set((s) => {
+      const vault = s.vaults[module];
+      const patterns = vault.patterns.map((p) =>
+        p.id === id ? { ...p, data: { ...p.data, patternName: name } } : p
+      );
+      return { vaults: { ...s.vaults, [module]: { ...vault, patterns } } };
+    }),
 }));
