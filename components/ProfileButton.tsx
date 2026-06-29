@@ -99,7 +99,7 @@ export default function ProfileButton({ user }: Props) {
     setOpen(false);
   };
 
-  const avatarUrl: string | undefined = user?.user_metadata?.avatar_url;
+  const avatarUrl: string | undefined = user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture;
 
   const Avatar = () => (
     <div style={{
