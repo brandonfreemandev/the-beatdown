@@ -23,7 +23,6 @@ const BTN: React.CSSProperties = {
 export default function VaultPanel({ module }: Props) {
   const vault = useStore((s) => s.vaults[module]);
   const loadPatternToGrid = useStore((s) => s.loadPatternToGrid);
-  const saveGridToPattern = useStore((s) => s.saveGridToPattern);
   const addPattern = useStore((s) => s.addPattern);
   const deletePattern = useStore((s) => s.deletePattern);
   const duplicatePattern = useStore((s) => s.duplicatePattern);
@@ -69,23 +68,6 @@ export default function VaultPanel({ module }: Props) {
         }}
       >
         <span style={{ fontWeight: 900, fontSize: 11, letterSpacing: 2, fontFamily: 'monospace' }}>VAULT</span>
-        <button
-          onClick={() => saveGridToPattern(module)}
-          title="Save current grid to active pattern"
-          style={{
-            background: '#000',
-            color: '#f9f9f7',
-            border: 'none',
-            fontFamily: 'monospace',
-            fontWeight: 700,
-            fontSize: 9,
-            letterSpacing: 1,
-            padding: '3px 8px',
-            cursor: 'pointer',
-          }}
-        >
-          SAVE
-        </button>
       </div>
 
       {/* Pattern slots */}
