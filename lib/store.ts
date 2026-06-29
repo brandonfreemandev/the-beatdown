@@ -79,7 +79,7 @@ interface AppState {
 }
 
 function defaultVault(): ModuleVault {
-  return { patterns: [], activePatternId: null, vaultOpen: false };
+  return { patterns: [], activePatternId: null, vaultOpen: true };
 }
 
 function seedPattern(module: ModuleType, index: number): Pattern {
@@ -128,7 +128,7 @@ export const useStore = create<AppState>()(
   vaults: initialVaults,
   grids: initialGrids,
   timeline: [],
-  timelineOpen: false,
+  timelineOpen: true,
   bpm: 120,
 
   setActiveModule: (m) =>
