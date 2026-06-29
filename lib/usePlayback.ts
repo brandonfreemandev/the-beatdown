@@ -87,9 +87,13 @@ export function usePlayback() {
       if (!block) continue;
       const pattern = state.vaults[module].patterns.find((p) => p.id === block.patternId);
       if (!pattern) continue;
+      // Use the live working grid for the active pattern so unsaved edits are always heard
+      const grid = block.patternId === state.vaults[module].activePatternId
+        ? state.grids[module]
+        : pattern.grid;
       const localStep = Math.floor((sec - block.startSec) / secPerStep) % GRID_STEPS;
       for (let row = 0; row < GRID_ROWS; row++) {
-        if (pattern.grid[row][localStep]) audioEngine.preview(module, SCALE_FREQS[module][row]);
+        if (grid[row][localStep]) audioEngine.preview(module, SCALE_FREQS[module][row]);
       }
     }
 
