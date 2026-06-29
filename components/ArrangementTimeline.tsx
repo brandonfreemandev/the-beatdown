@@ -230,24 +230,35 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
           style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
         >
           {/* Ruler */}
-          <div style={{ height: 20, borderBottom: '2px solid #000', position: 'relative', flexShrink: 0, marginLeft: LABEL_WIDTH }}>
+          <div style={{ height: 20, borderBottom: '2px solid #000', position: 'relative', flexShrink: 0, display: 'flex' }}>
+            {/* Label-width spacer so ruler aligns with track area */}
+            <div style={{ width: LABEL_WIDTH, flexShrink: 0, borderRight: '2px solid #000', background: '#f9f9f7' }} />
+          <div style={{ flex: 1, position: 'relative', cursor: 'pointer' }} onClick={(e) => {
+              if (!railRef.current) return;
+              const rect = railRef.current.getBoundingClientRect();
+              const trackWidth = rect.width - LABEL_WIDTH;
+              const x = Math.max(0, e.clientX - rect.left - LABEL_WIDTH);
+              const raw = (x / trackWidth) * MAX_ARRANGEMENT_SEC;
+              // Snap to nearest 5s marker
+              onSeek(Math.round(raw / 5) * 5);
+            }}>
             {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map((sec) => (
+                <div
+                  key={sec}
+                  style={{
+                    position: 'absolute',
+                    left: `${secToPercent(sec)}%`,
+                    top: 0, bottom: 0,
+                    borderLeft: '1px solid #000',
+                    paddingLeft: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: 1 }}>{sec}s</span>
+                </div>
+              ))}
               <div
-                key={sec}
-                style={{
-                  position: 'absolute',
-                  left: `${secToPercent(sec)}%`,
-                  top: 0, bottom: 0,
-                  borderLeft: '1px solid #000',
-                  paddingLeft: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                <span style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: 1 }}>{sec}s</span>
-              </div>
-            ))}
-            <div
                 onMouseDown={handlePlayheadDrag}
                 style={{
                   position: 'absolute',
@@ -264,7 +275,8 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                 <div style={{ width: 8, height: 8, background: '#e8212b', clipPath: 'polygon(0 0, 100% 0, 50% 100%)', flexShrink: 0 }} />
                 <div style={{ position: 'absolute', left: 3, top: 0, bottom: 0, width: 2, background: '#e8212b' }} />
               </div>
-          </div>
+          </div>{/* end track area */}
+          </div>{/* end ruler */}
 
           {/* Module rows */}
           {MODULES.map((module, i) => {
