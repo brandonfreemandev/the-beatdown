@@ -19,6 +19,8 @@ export default function ModuleControls({ module, playhead, isPlaying, onTogglePl
   const [cutoff, setCutoff] = useState(0.8);
   const [decay, setDecay] = useState(0.3);
   const [attack, setAttack] = useState(0.05);
+  const [res, setRes] = useState(0.05); // 0–1 mapped to Q 0–20
+  const [pan, setPan] = useState(0.5);  // 0–1 mapped to -1..+1
 
   const handleVolume = useCallback((v: number) => {
     setVolume(v);
@@ -39,6 +41,16 @@ export default function ModuleControls({ module, playhead, isPlaying, onTogglePl
   const handleAttack = useCallback((v: number) => {
     setAttack(v);
     audioEngine.setAttack(module, 0.001 + v * 0.3);
+  }, [module]);
+
+  const handleRes = useCallback((v: number) => {
+    setRes(v);
+    audioEngine.setRes(module, v * 20); // 0–20 Q range
+  }, [module]);
+
+  const handlePan = useCallback((v: number) => {
+    setPan(v);
+    audioEngine.setPan(module, (v - 0.5) * 2); // 0–1 → -1..+1
   }, [module]);
 
   const bpm = useStore((s) => s.bpm);
@@ -73,8 +85,8 @@ export default function ModuleControls({ module, playhead, isPlaying, onTogglePl
         <RotaryKnob label="CUTOFF" value={cutoff} onChange={handleCutoff} color={color} />
         <RotaryKnob label="DECAY" value={decay} onChange={handleDecay} color={color} />
         <RotaryKnob label="ATTACK" value={attack} onChange={handleAttack} color={color} />
-        <RotaryKnob label="RES" value={0.4} onChange={() => {}} color={color} />
-        <RotaryKnob label="PAN" value={0.5} onChange={() => {}} color={color} />
+        <RotaryKnob label="RES" value={res} onChange={handleRes} color={color} />
+        <RotaryKnob label="PAN" value={pan} onChange={handlePan} color={color} />
 
         {/* Play + BPM — lives here instead of the header row */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', gap: 12, paddingBottom: 2 }}>
@@ -84,7 +96,7 @@ export default function ModuleControls({ module, playhead, isPlaying, onTogglePl
               height: 36,
               padding: '0 18px',
               background: isPlaying ? '#000' : color,
-              color: '#000',
+              color: isPlaying ? '#f9f9f7' : '#000',
               fontFamily: 'monospace',
               fontWeight: 700,
               fontSize: 11,

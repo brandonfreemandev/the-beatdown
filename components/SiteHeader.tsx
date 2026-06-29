@@ -139,7 +139,7 @@ export default function SiteHeader({ currentPage, user }: Props) {
           opacity: signingIn ? 0.5 : 1,
         }}
       >
-        {user ? `${userName} ↩` : 'SIGN IN'}
+        {user ? userName : 'SIGN IN'}
       </button>
     </div>
   );

@@ -16,10 +16,13 @@ export interface SequenceData {
 interface ModuleState {
   gainNode: GainNode;
   filterNode: BiquadFilterNode;
+  pannerNode: StereoPannerNode;
   volume: number;   // 0–1
   cutoff: number;   // Hz
   decay: number;    // seconds
   attack: number;   // seconds
+  res: number;      // filter Q 0–20
+  pan: number;      // -1 to +1
 }
 
 class AudioEngine {
@@ -43,18 +46,25 @@ class AudioEngine {
     for (const type of types) {
       const gainNode = ctx.createGain();
       const filterNode = ctx.createBiquadFilter();
+      const pannerNode = ctx.createStereoPanner();
       filterNode.type = 'lowpass';
       filterNode.frequency.value = 8000;
+      filterNode.Q.value = 1;
+      // chain: osc → envGain → filter → gain → panner → destination
       filterNode.connect(gainNode);
-      gainNode.connect(ctx.destination);
+      gainNode.connect(pannerNode);
+      pannerNode.connect(ctx.destination);
       gainNode.gain.value = 0.7;
       this.modules.set(type, {
         gainNode,
         filterNode,
+        pannerNode,
         volume: 0.7,
         cutoff: 8000,
         decay: 0.3,
         attack: 0.01,
+        res: 1,
+        pan: 0,
       });
     }
   }
@@ -121,6 +131,20 @@ class AudioEngine {
     const state = this.modules.get(module);
     if (!state) return;
     state.attack = seconds;
+  }
+
+  setRes(module: ModuleType, q: number) {
+    const state = this.modules.get(module);
+    if (!state) return;
+    state.res = q;
+    state.filterNode.Q.setTargetAtTime(q, this.getCtx().currentTime, 0.01);
+  }
+
+  setPan(module: ModuleType, pan: number) {
+    const state = this.modules.get(module);
+    if (!state) return;
+    state.pan = pan;
+    state.pannerNode.pan.setTargetAtTime(pan, this.getCtx().currentTime, 0.01);
   }
 
   setBpm(bpm: number) {

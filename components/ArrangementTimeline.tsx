@@ -11,13 +11,14 @@ interface Props {
   onToggleArr: () => void;
   onToggleLoop: () => void;
   onSeek: (sec: number) => void;
+  onReturnToStart: () => void;
 }
 
 const ROW_HEIGHT = 36;
 const HANDLE_HEIGHT = 28;
 const LABEL_WIDTH = 52;
 
-export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop, onToggleArr, onToggleLoop, onSeek }: Props) {
+export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop, onToggleArr, onToggleLoop, onSeek, onReturnToStart }: Props) {
   const timelineOpen = useStore((s) => s.timelineOpen);
   const toggleTimeline = useStore((s) => s.toggleTimeline);
   const timeline = useStore((s) => s.timeline);
@@ -170,9 +171,9 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
         <div style={{ display: 'flex', alignItems: 'stretch', borderLeft: '2px solid #333', flexShrink: 0 }}>
           <button
             onClick={onToggleLoop}
-            title="Toggle arrangement loop"
+            title="Toggle loop"
             style={{
-              padding: '0 12px',
+              padding: '0 10px',
               background: arrLoop ? '#f9f9f7' : 'transparent',
               color: arrLoop ? '#000' : '#f9f9f7',
               border: 'none',
@@ -187,10 +188,27 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
             ⟳ LOOP
           </button>
           <button
-            onClick={onToggleArr}
-            title="Play/stop arrangement"
+            onClick={onReturnToStart}
+            title="Return to start"
             style={{
-              padding: '0 16px',
+              padding: '0 10px',
+              background: 'transparent',
+              color: '#f9f9f7',
+              border: 'none',
+              borderRight: '2px solid #333',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              fontSize: 11,
+              cursor: 'pointer',
+            }}
+          >
+            ⏮
+          </button>
+          <button
+            onClick={onToggleArr}
+            title="Play/pause arrangement"
+            style={{
+              padding: '0 14px',
               background: arrIsPlaying ? '#e8212b' : 'transparent',
               color: '#f9f9f7',
               border: 'none',
@@ -201,7 +219,7 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
               cursor: 'pointer',
             }}
           >
-            {arrIsPlaying ? '■ STOP ARR' : '▶ PLAY ARR'}
+            {arrIsPlaying ? '⏸ PAUSE' : '▶ PLAY ARR'}
           </button>
         </div>
       </div>
@@ -229,8 +247,7 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                 <span style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: 1 }}>{sec}s</span>
               </div>
             ))}
-            {timelineSec >= 0 && (
-              <div
+            <div
                 onMouseDown={handlePlayheadDrag}
                 style={{
                   position: 'absolute',
@@ -247,7 +264,6 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                 <div style={{ width: 8, height: 8, background: '#e8212b', clipPath: 'polygon(0 0, 100% 0, 50% 100%)', flexShrink: 0 }} />
                 <div style={{ position: 'absolute', left: 3, top: 0, bottom: 0, width: 2, background: '#e8212b' }} />
               </div>
-            )}
           </div>
 
           {/* Module rows */}
@@ -289,18 +305,16 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                 {/* Track area */}
                 <div style={{ flex: 1, position: 'relative' }}>
                   {/* Playhead */}
-                  {timelineSec >= 0 && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: `${secToPercent(timelineSec)}%`,
-                        top: 0, bottom: 0, width: 2,
-                        background: '#e8212b',
-                        pointerEvents: 'none',
-                        zIndex: 10,
-                      }}
-                    />
-                  )}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: `${secToPercent(timelineSec)}%`,
+                      top: 0, bottom: 0, width: 2,
+                      background: '#e8212b',
+                      pointerEvents: 'none',
+                      zIndex: 10,
+                    }}
+                  />
 
                   {rowBlocks.map((block) => {
                     const left = secToPercent(block.startSec);

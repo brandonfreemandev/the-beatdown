@@ -16,7 +16,7 @@ export function usePlayback() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(-1);
   const [arrIsPlaying, setArrIsPlaying] = useState(false);
-  const [timelineSec, setTimelineSec] = useState(-1);
+  const [timelineSec, setTimelineSec] = useState(0);
   const [arrLoop, setArrLoop] = useState(false);
 
   // Refs for values that interval closures must read without going stale
@@ -73,7 +73,7 @@ export function usePlayback() {
       if (arrTimerRef.current) { clearInterval(arrTimerRef.current); arrTimerRef.current = null; }
       setArrIsPlaying(false);
       arrIsPlayingRef.current = false;
-      setTimelineSec(-1);
+      // Keep playhead at end position (don't reset to -1)
       return;
     }
 
@@ -108,17 +108,25 @@ export function usePlayback() {
     setPlayhead(-1);
   }, []);
 
+  // startArr resumes from current arrStepRef position (supports pause/resume)
   const startArr = useCallback(() => {
     audioEngine.resume();
-    arrStepRef.current = 0;
     if (arrTimerRef.current) clearInterval(arrTimerRef.current);
     arrTimerRef.current = setInterval(() => arrTickRef.current(), getMsPerStep());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pause: stop the interval but keep timelineSec position
   const stopArr = useCallback(() => {
     if (arrTimerRef.current) { clearInterval(arrTimerRef.current); arrTimerRef.current = null; }
-    setTimelineSec(-1);
   }, []);
+
+  const returnToStart = useCallback(() => {
+    stopArr();
+    arrStepRef.current = 0;
+    setTimelineSec(0);
+    setArrIsPlaying(false);
+    arrIsPlayingRef.current = false;
+  }, [stopArr]);
 
   // ── Public toggles — read from refs so they're never stale ───────────────
   const toggle = useCallback(() => {
@@ -168,5 +176,5 @@ export function usePlayback() {
     setTimelineSec(sec);
   }, []);
 
-  return { isPlaying, playhead, toggle, arrIsPlaying, timelineSec, arrLoop, setArrLoop, toggleArr, seekArr };
+  return { isPlaying, playhead, toggle, arrIsPlaying, timelineSec, arrLoop, setArrLoop, toggleArr, seekArr, returnToStart };
 }
