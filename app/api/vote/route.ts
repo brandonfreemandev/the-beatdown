@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import type { Match } from '@/lib/supabase/types';
 
+const MIN_VOTES_TO_RESOLVE = 3;
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -16,9 +18,9 @@ export async function POST(request: Request) {
 
   const { data: match } = await service
     .from('matches')
-    .select('track_a_id, track_b_id, status')
+    .select('track_a_id, track_b_id, status, votes_a, votes_b')
     .eq('id', matchId)
-    .single() as { data: Pick<Match, 'track_a_id' | 'track_b_id' | 'status'> | null; error: unknown };
+    .single() as { data: Pick<Match, 'track_a_id' | 'track_b_id' | 'status' | 'votes_a' | 'votes_b'> | null; error: unknown };
 
   if (!match || match.status !== 'active') {
     return NextResponse.json({ error: 'Match not active' }, { status: 400 });
@@ -45,5 +47,16 @@ export async function POST(request: Request) {
   }
   if (error) return NextResponse.json({ error: (error as any).message }, { status: 500 });
 
-  return NextResponse.json({ ok: true });
+  // Check updated vote counts and auto-resolve if threshold reached
+  const newVotesA = match.votes_a + (votedForId === match.track_a_id ? 1 : 0);
+  const newVotesB = match.votes_b + (votedForId === match.track_b_id ? 1 : 0);
+  const total = newVotesA + newVotesB;
+
+  if (total >= MIN_VOTES_TO_RESOLVE && newVotesA !== newVotesB) {
+    const winnerId = newVotesA > newVotesB ? match.track_a_id : match.track_b_id;
+    await service.rpc('resolve_match', { p_match_id: matchId, p_winner_id: winnerId });
+    return NextResponse.json({ ok: true, resolved: true, winnerId });
+  }
+
+  return NextResponse.json({ ok: true, resolved: false });
 }

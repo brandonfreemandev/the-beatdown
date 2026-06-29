@@ -10,11 +10,11 @@ export default async function ArenaPage() {
   const { data: matches } = await supabase
     .from('matches')
     .select(`
-      id, votes_a, votes_b, status,
+      id, votes_a, votes_b, status, winner_id,
       track_a:submissions!matches_track_a_id_fkey(id, title, arrangement),
       track_b:submissions!matches_track_b_id_fkey(id, title, arrangement)
     `)
-    .eq('status', 'active')
+    .in('status', ['active', 'resolved'])
     .order('created_at', { ascending: false })
     .limit(10) as { data: any[] | null; error: unknown };
 

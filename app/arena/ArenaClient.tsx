@@ -10,7 +10,8 @@ interface ArenaMatch {
   id: string;
   votes_a: number;
   votes_b: number;
-  status: string;
+  status: 'active' | 'resolved';
+  winner_id: string | null;
   track_a: { id: string; title: string; arrangement: any };
   track_b: { id: string; title: string; arrangement: any };
 }
@@ -139,20 +140,23 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
           const hasVoted = alreadyVoted(match.id);
           const myVote = voted[match.id] ?? (userVotes.includes(match.id) ? 'voted' : null);
           const isLoading = loading === match.id;
+          const isResolved = match.status === 'resolved';
           const total = match.votes_a + match.votes_b;
           const pctA = total > 0 ? Math.round((match.votes_a / total) * 100) : 50;
           const pctB = total > 0 ? Math.round((match.votes_b / total) * 100) : 50;
+          const winnerIsA = match.winner_id === match.track_a.id;
+          const winnerIsB = match.winner_id === match.track_b.id;
 
           return (
             <div key={match.id} style={{ marginBottom: 48, border: '3px solid #000' }}>
               {/* Match header */}
               <div style={{
-                background: '#000', color: '#f9f9f7',
+                background: isResolved ? '#444' : '#000', color: '#f9f9f7',
                 padding: '10px 16px', fontWeight: 700, fontSize: 9, letterSpacing: 3,
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               }}>
-                <span>BATTLE</span>
-                <span style={{ color: '#666' }}>{match.votes_a + match.votes_b} VOTE{match.votes_a + match.votes_b !== 1 ? 'S' : ''}</span>
+                <span>{isResolved ? '✓ RESOLVED' : 'BATTLE'}</span>
+                <span style={{ color: '#aaa' }}>{total} VOTE{total !== 1 ? 'S' : ''}</span>
               </div>
 
               {/* Tracks */}
@@ -184,18 +188,24 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
               <div style={{ borderTop: hasVoted && total > 0 ? 'none' : '3px solid #000', display: 'flex' }}>
                 <VoteBtn
                   onClick={() => castVote(match.id, match.track_a.id)}
-                  disabled={!!hasVoted || !user || isLoading}
+                  disabled={!!hasVoted || !user || isLoading || isResolved}
                   active={myVote === match.track_a.id}
                   color={TRACK_COLORS.a}
-                  label={hasVoted ? `${match.votes_a} vote${match.votes_a !== 1 ? 's' : ''} · ${pctA}%` : `VOTE FOR ${match.track_a.title.toUpperCase()}`}
+                  winner={winnerIsA}
+                  label={hasVoted || isResolved
+                    ? `${winnerIsA ? '▲ WINNER · ' : ''}${match.votes_a} vote${match.votes_a !== 1 ? 's' : ''} · ${pctA}%`
+                    : `VOTE FOR ${match.track_a.title.toUpperCase()}`}
                 />
                 <div style={{ width: 3, background: '#000', flexShrink: 0 }} />
                 <VoteBtn
                   onClick={() => castVote(match.id, match.track_b.id)}
-                  disabled={!!hasVoted || !user || isLoading}
+                  disabled={!!hasVoted || !user || isLoading || isResolved}
                   active={myVote === match.track_b.id}
                   color={TRACK_COLORS.b}
-                  label={hasVoted ? `${match.votes_b} vote${match.votes_b !== 1 ? 's' : ''} · ${pctB}%` : `VOTE FOR ${match.track_b.title.toUpperCase()}`}
+                  winner={winnerIsB}
+                  label={hasVoted || isResolved
+                    ? `${winnerIsB ? '▲ WINNER · ' : ''}${match.votes_b} vote${match.votes_b !== 1 ? 's' : ''} · ${pctB}%`
+                    : `VOTE FOR ${match.track_b.title.toUpperCase()}`}
                 />
               </div>
             </div>
@@ -206,8 +216,8 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
   );
 }
 
-function VoteBtn({ onClick, disabled, active, color, label }: {
-  onClick: () => void; disabled: boolean; active: boolean; color: string; label: string;
+function VoteBtn({ onClick, disabled, active, color, label, winner }: {
+  onClick: () => void; disabled: boolean; active: boolean; color: string; label: string; winner?: boolean;
 }) {
   return (
     <button
@@ -215,7 +225,7 @@ function VoteBtn({ onClick, disabled, active, color, label }: {
       disabled={disabled}
       style={{
         flex: 1, padding: '14px 12px',
-        background: active ? color : 'transparent',
+        background: winner ? color : active ? color : 'transparent',
         border: 'none',
         fontFamily: 'monospace', fontWeight: 700, fontSize: 10, letterSpacing: 1,
         cursor: disabled ? 'default' : 'pointer',
