@@ -217,11 +217,14 @@ export default function ProfileButton({ user, isAdmin = false }: Props) {
                           <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#000' }}>{p.username ?? 'anon'}</span>
                           <button
                             onClick={() => adminAction({ action: 'toggle_admin', userId: p.id, isAdmin: !p.is_admin })}
+                            disabled={p.id === user?.id}
                             style={{
                               fontFamily: 'monospace', fontSize: 8, fontWeight: 700, letterSpacing: 1,
-                              padding: '2px 8px', cursor: 'pointer', border: '2px solid #000',
+                              padding: '2px 8px', cursor: p.id === user?.id ? 'default' : 'pointer',
+                              border: '2px solid #000',
                               background: p.is_admin ? '#000' : 'transparent',
                               color: p.is_admin ? '#f9f9f7' : '#000',
+                              opacity: p.id === user?.id ? 0.4 : 1,
                             }}
                           >
                             {p.is_admin ? 'ADMIN' : 'USER'}
