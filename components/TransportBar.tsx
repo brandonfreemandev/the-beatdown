@@ -1,25 +1,13 @@
 'use client';
-import { useStore } from '@/lib/store';
-import { audioEngine } from '@/lib/audioEngine';
 import AuthButton from './AuthButton';
 import type { User } from '@supabase/supabase-js';
 
 interface Props {
-  isPlaying: boolean;
-  onTogglePlay: () => void;
   onSubmit: () => void;
   user: User | null;
 }
 
-export default function TransportBar({ isPlaying, onTogglePlay, onSubmit, user }: Props) {
-  const bpm = useStore((s) => s.bpm);
-  const setBpm = useStore((s) => s.setBpm);
-
-  const handleBpmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = Number(e.target.value);
-    setBpm(v);
-    audioEngine.setBpm(v);
-  };
+export default function TransportBar({ onSubmit, user }: Props) {
 
   return (
     <div
@@ -52,58 +40,6 @@ export default function TransportBar({ isPlaying, onTogglePlay, onSubmit, user }
         THE BEATDOWN
       </div>
 
-      {/* Play/Stop */}
-      <button
-        onClick={onTogglePlay}
-        style={{
-          width: 80,
-          background: isPlaying ? '#000' : '#f9f9f7',
-          color: isPlaying ? '#f9f9f7' : '#000',
-          fontFamily: 'monospace',
-          fontWeight: 700,
-          fontSize: 11,
-          letterSpacing: 2,
-          cursor: 'pointer',
-          border: 'none',
-          borderRight: '3px solid #000',
-          flexShrink: 0,
-        }}
-      >
-        {isPlaying ? '■ STOP' : '▶ PLAY'}
-      </button>
-
-      {/* BPM */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '0 16px',
-          borderRight: '3px solid #000',
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 2 }}>BPM</span>
-        <input
-          type="number"
-          min={40}
-          max={240}
-          value={bpm}
-          onChange={handleBpmChange}
-          style={{
-            width: 56,
-            background: 'transparent',
-            border: '2px solid #000',
-            fontFamily: 'monospace',
-            fontWeight: 700,
-            fontSize: 13,
-            textAlign: 'center',
-            padding: '2px 4px',
-            color: '#000',
-          }}
-        />
-      </div>
-
       {/* Nav */}
       {(['STUDIO', 'ARENA', 'LEADERBOARD'] as const).map((page) => (
         <a
@@ -120,11 +56,15 @@ export default function TransportBar({ isPlaying, onTogglePlay, onSubmit, user }
             letterSpacing: 2,
             textDecoration: 'none',
             color: '#000',
-            background: page === 'STUDIO' ? 'rgba(0,0,0,0.06)' : 'transparent',
+            background: page === 'STUDIO' ? 'rgba(0,0,0,0.07)' : 'transparent',
             flexShrink: 0,
+            position: 'relative',
           }}
         >
           {page}
+          {page === 'STUDIO' && (
+            <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: '#000' }} />
+          )}
         </a>
       ))}
 

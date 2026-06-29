@@ -8,9 +8,11 @@ import type { ModuleType } from '@/lib/audioEngine';
 interface Props {
   module: ModuleType;
   playhead: number;
+  isPlaying: boolean;
+  onTogglePlay: () => void;
 }
 
-export default function ModuleControls({ module, playhead }: Props) {
+export default function ModuleControls({ module, playhead, isPlaying, onTogglePlay }: Props) {
   const color = MODULE_COLORS[module];
   const vaultOpen = useStore((s) => s.vaults[module].vaultOpen);
 
@@ -39,6 +41,14 @@ export default function ModuleControls({ module, playhead }: Props) {
     setAttack(v);
     audioEngine.setAttack(module, 0.001 + v * 0.3);
   }, [module]);
+
+  const bpm = useStore((s) => s.bpm);
+  const setBpm = useStore((s) => s.setBpm);
+  const handleBpmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = Number(e.target.value);
+    setBpm(v);
+    audioEngine.setBpm(v);
+  };
 
   return (
     <div
@@ -70,6 +80,49 @@ export default function ModuleControls({ module, playhead }: Props) {
             <RotaryKnob label="PAN" value={0.5} onChange={() => {}} color={color} />
           </>
         )}
+
+        {/* Play + BPM — lives here instead of the header row */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', gap: 12, paddingBottom: 2 }}>
+          <button
+            onClick={onTogglePlay}
+            style={{
+              height: 36,
+              padding: '0 18px',
+              background: isPlaying ? '#000' : '#f9f9f7',
+              color: isPlaying ? '#f9f9f7' : '#000',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              fontSize: 11,
+              letterSpacing: 2,
+              cursor: 'pointer',
+              border: '2px solid #000',
+            }}
+          >
+            {isPlaying ? '■ STOP' : '▶ PLAY'}
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 2, paddingBottom: 2 }}>BPM</span>
+            <input
+              type="number"
+              min={40}
+              max={240}
+              value={bpm}
+              onChange={handleBpmChange}
+              style={{
+                width: 56,
+                height: 36,
+                background: 'transparent',
+                border: '2px solid #000',
+                fontFamily: 'monospace',
+                fontWeight: 700,
+                fontSize: 13,
+                textAlign: 'center',
+                padding: '2px 4px',
+                color: '#000',
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Sequencer grid area */}

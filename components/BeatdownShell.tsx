@@ -44,8 +44,6 @@ export default function BeatdownShell() {
       }}
     >
       <TransportBar
-        isPlaying={isPlaying}
-        onTogglePlay={toggle}
         onSubmit={() => setSubmitOpen(true)}
         user={user}
       />
@@ -104,7 +102,7 @@ export default function BeatdownShell() {
       {/* Main area */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
         <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
-          <ModuleControls module={activeModule} playhead={playhead} />
+          <ModuleControls module={activeModule} playhead={playhead} isPlaying={isPlaying} onTogglePlay={toggle} />
         </div>
         {vaultOpen && <VaultPanel module={activeModule} />}
       </div>
