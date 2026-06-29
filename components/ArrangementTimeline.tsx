@@ -239,8 +239,9 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
               const trackWidth = rect.width - LABEL_WIDTH;
               const x = Math.max(0, e.clientX - rect.left - LABEL_WIDTH);
               const raw = (x / trackWidth) * MAX_ARRANGEMENT_SEC;
-              // Snap to nearest 5s marker
-              onSeek(Math.round(raw / 5) * 5);
+              const state = useStore.getState();
+              const secPerBlock = (60 / state.bpm) * 8;
+              onSeek(Math.round(raw / secPerBlock) * secPerBlock);
             }}>
             {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map((sec) => (
                 <div
