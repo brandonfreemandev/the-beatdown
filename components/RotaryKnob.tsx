@@ -6,9 +6,10 @@ interface Props {
   value: number;   // 0–1
   onChange: (v: number) => void;
   color?: string;
+  defaultValue?: number;
 }
 
-export default function RotaryKnob({ label, value, onChange, color = '#000' }: Props) {
+export default function RotaryKnob({ label, value, onChange, color = '#000', defaultValue = 0.5 }: Props) {
   const dragging = useRef(false);
   const startY = useRef(0);
   const startVal = useRef(0);
@@ -55,6 +56,7 @@ export default function RotaryKnob({ label, value, onChange, color = '#000' }: P
         width={48}
         height={48}
         onMouseDown={onMouseDown}
+        onDoubleClick={() => onChange(defaultValue)}
         style={{ cursor: 'ns-resize' }}
       >
         {/* Track */}

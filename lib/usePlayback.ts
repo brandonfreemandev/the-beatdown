@@ -69,29 +69,29 @@ export function usePlayback() {
       if (arrLoopRef.current) {
         arrStepRef.current = 0;
         setTimelineSec(0);
+        // fall through and play step 0 immediately — no gap on loop
+      } else {
+        if (arrTimerRef.current) { clearInterval(arrTimerRef.current); arrTimerRef.current = null; }
+        setArrIsPlaying(false);
+        arrIsPlayingRef.current = false;
         return;
       }
-      if (arrTimerRef.current) { clearInterval(arrTimerRef.current); arrTimerRef.current = null; }
-      setArrIsPlaying(false);
-      arrIsPlayingRef.current = false;
-      // Keep playhead at end position (don't reset to -1)
-      return;
     }
 
-    setTimelineSec(sec);
+    const playSec = arrStepRef.current * secPerStep;
+    setTimelineSec(playSec);
 
     for (const module of MODULES) {
       const block = state.timeline.find(
-        (b) => b.moduleType === module && sec >= b.startSec && sec < b.startSec + b.durationSec
+        (b) => b.moduleType === module && playSec >= b.startSec && playSec < b.startSec + b.durationSec
       );
       if (!block) continue;
       const pattern = state.vaults[module].patterns.find((p) => p.id === block.patternId);
       if (!pattern) continue;
-      // Use the live working grid for the active pattern so unsaved edits are always heard
       const grid = block.patternId === state.vaults[module].activePatternId
         ? state.grids[module]
         : pattern.grid;
-      const localStep = Math.floor((sec - block.startSec) / secPerStep) % GRID_STEPS;
+      const localStep = Math.floor((playSec - block.startSec) / secPerStep) % GRID_STEPS;
       for (let row = 0; row < GRID_ROWS; row++) {
         if (grid[row][localStep]) audioEngine.preview(module, SCALE_FREQS[module][row], row);
       }

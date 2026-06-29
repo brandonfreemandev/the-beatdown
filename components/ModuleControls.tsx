@@ -83,12 +83,12 @@ export default function ModuleControls({ module, playhead, isPlaying, onTogglePl
           alignItems: 'flex-end',
         }}
       >
-        <RotaryKnob label="VOL" value={volume} onChange={handleVolume} color={color} />
-        <RotaryKnob label="CUTOFF" value={cutoff} onChange={handleCutoff} color={color} />
-        <RotaryKnob label="DECAY" value={decay} onChange={handleDecay} color={color} />
-        <RotaryKnob label="ATTACK" value={attack} onChange={handleAttack} color={color} />
-        <RotaryKnob label="RES" value={res} onChange={handleRes} color={color} />
-        <RotaryKnob label="PAN" value={pan} onChange={handlePan} color={color} />
+        <RotaryKnob label="VOL"    value={volume} onChange={handleVolume} color={color} defaultValue={0.7} />
+        <RotaryKnob label="CUTOFF" value={cutoff} onChange={handleCutoff} color={color} defaultValue={0.8} />
+        <RotaryKnob label="DECAY"  value={decay}  onChange={handleDecay}  color={color} defaultValue={0.3} />
+        <RotaryKnob label="ATTACK" value={attack} onChange={handleAttack} color={color} defaultValue={0.05} />
+        <RotaryKnob label="RES"    value={res}    onChange={handleRes}    color={color} defaultValue={0.05} />
+        <RotaryKnob label="PAN"    value={pan}    onChange={handlePan}    color={color} defaultValue={0.5} />
 
         {/* Play + BPM — lives here instead of the header row */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', gap: 12, paddingBottom: 2 }}>
