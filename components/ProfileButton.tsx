@@ -7,6 +7,10 @@ import type { User } from '@supabase/supabase-js';
 interface Props {
   user: User | null;
   isAdmin?: boolean;
+  onSubmit?: () => void;
+  gateBlocked?: boolean;
+  votesCast?: number | null;
+  votesRequired?: number;
 }
 
 function getInitials(user: User): string {
@@ -17,7 +21,7 @@ function getInitials(user: User): string {
   return '?';
 }
 
-export default function ProfileButton({ user, isAdmin = false }: Props) {
+export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlocked = false, votesCast = null, votesRequired = 3 }: Props) {
   const [open, setOpen] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
   const [confirmOut, setConfirmOut] = useState(false);
@@ -125,7 +129,7 @@ export default function ProfileButton({ user, isAdmin = false }: Props) {
         style={{
           padding: '0 16px', background: 'transparent', color: '#000',
           fontFamily: 'monospace', fontWeight: 700, fontSize: 9, letterSpacing: 2,
-          cursor: 'pointer', border: 'none', borderLeft: '3px solid #000',
+          cursor: 'pointer', border: 'none',
           flexShrink: 0, opacity: signingIn ? 0.5 : 1, height: '100%',
         }}
       >
@@ -135,7 +139,7 @@ export default function ProfileButton({ user, isAdmin = false }: Props) {
   }
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative', flexShrink: 0, borderLeft: '3px solid #000', display: 'flex', alignItems: 'center' }}>
+    <div ref={dropdownRef} style={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
       <button
         onClick={() => { setOpen((o) => !o); setConfirmNew(false); setConfirmOut(false); setAdminOpen(false); }}
         style={{ padding: '0 14px', height: '100%', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
@@ -147,7 +151,6 @@ export default function ProfileButton({ user, isAdmin = false }: Props) {
         }}>
           {getInitials(user)}
         </div>
-        <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 9, letterSpacing: 1, color: '#000' }}>▾</span>
       </button>
 
       {open && (
@@ -159,6 +162,37 @@ export default function ProfileButton({ user, isAdmin = false }: Props) {
           <div style={{ padding: '10px 14px', borderBottom: '2px solid #000', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1, color: '#666' }}>
             {user.user_metadata?.full_name ?? user.email ?? 'SIGNED IN'}
           </div>
+
+          {/* Submit — always in dropdown, especially for mobile */}
+          {onSubmit && (
+            <button
+              onClick={gateBlocked ? undefined : () => { onSubmit(); setOpen(false); }}
+              style={{
+                padding: '10px 14px',
+                background: gateBlocked ? 'transparent' : '#e8212b',
+                color: gateBlocked ? '#999' : '#fff',
+                border: 'none',
+                borderBottom: '2px solid #000',
+                fontFamily: 'monospace',
+                fontWeight: 900,
+                fontSize: 10,
+                letterSpacing: 2,
+                cursor: gateBlocked ? 'not-allowed' : 'pointer',
+                textAlign: 'left',
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+              }}
+            >
+              <span>⬆ SUBMIT TRACK</span>
+              {gateBlocked && (
+                <span style={{ fontSize: 8, letterSpacing: 1, color: '#999' }}>
+                  VOTE {votesCast}/{votesRequired} FIRST TO UNLOCK
+                </span>
+              )}
+            </button>
+          )}
 
           <MenuBtn onClick={saveSession}>↓ SAVE SESSION</MenuBtn>
           <MenuBtn onClick={loadSession}>↑ LOAD SESSION</MenuBtn>
@@ -190,7 +224,6 @@ export default function ProfileButton({ user, isAdmin = false }: Props) {
                 <div style={{ borderTop: '2px solid #000', borderBottom: '2px solid #000', background: 'rgba(0,0,0,0.04)', padding: '12px 14px' }}>
                   {adminLoading && <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#666', marginBottom: 8 }}>Loading…</div>}
 
-                  {/* Round status */}
                   <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: 2, fontWeight: 700, marginBottom: 6 }}>ROUND</div>
                   {openRound ? (
                     <div style={{ marginBottom: 8 }}>
@@ -208,7 +241,6 @@ export default function ProfileButton({ user, isAdmin = false }: Props) {
                     </div>
                   )}
 
-                  {/* User admin toggle */}
                   {profiles.length > 0 && (
                     <>
                       <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: 2, fontWeight: 700, marginTop: 10, marginBottom: 6 }}>ADMINS</div>

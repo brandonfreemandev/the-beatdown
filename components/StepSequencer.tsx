@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { audioEngine } from '@/lib/audioEngine';
 import { MODULE_COLORS, GRID_ROWS, GRID_STEPS, useStore } from '@/lib/store';
 import type { ModuleType } from '@/lib/audioEngine';
@@ -12,9 +12,8 @@ const SCALE_FREQS: Record<ModuleType, number[]> = {
   arp:   [440, 493.9, 523.2, 587.3, 659.3, 739.9, 830.6, 880],
 };
 
-const DRUM_LABELS = ['KICK', 'KICK 2', 'SNARE', 'SNARE 2', 'GHOST', 'HI-HAT', 'HI-HAT 2', 'OPEN HAT'];
+const DRUM_LABELS_FULL = ['KICK', 'KICK 2', 'SNARE', 'SNARE 2', 'GHOST', 'HI-HAT', 'HI-HAT 2', 'OPEN HAT'];
 
-// Convert Hz to nearest note name
 function freqToNote(freq: number): string {
   const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const semitones = Math.round(12 * Math.log2(freq / 440)) + 69;
@@ -23,8 +22,8 @@ function freqToNote(freq: number): string {
   return `${note}${octave}`;
 }
 
-const NOTE_LABELS: Record<ModuleType, string[]> = {
-  drum:  DRUM_LABELS,
+const NOTE_LABELS_FULL: Record<ModuleType, string[]> = {
+  drum:  DRUM_LABELS_FULL,
   bass:  SCALE_FREQS.bass.map(freqToNote),
   pad:   SCALE_FREQS.pad.map(freqToNote),
   synth: SCALE_FREQS.synth.map(freqToNote),
@@ -40,7 +39,6 @@ export default function StepSequencer({ module, playhead }: Props) {
   const grid = useStore((s) => s.grids[module]);
   const toggleCell = useStore((s) => s.toggleCell);
   const color = MODULE_COLORS[module];
-  const [hoveredCell, setHoveredCell] = useState<[number, number] | null>(null);
 
   const toggle = (row: number, col: number) => {
     toggleCell(module, row, col);
@@ -49,62 +47,33 @@ export default function StepSequencer({ module, playhead }: Props) {
     }
   };
 
-  useEffect(() => {
-    if (playhead < 0) return;
-    for (let row = 0; row < GRID_ROWS; row++) {
-      if (grid[row][playhead]) {
-        audioEngine.preview(module, SCALE_FREQS[module][row], row);
-      }
-    }
-  }, [playhead, module, grid]);
-
   const groups = [0, 1, 2, 3].map((g) => [g * 4, g * 4 + 1, g * 4 + 2, g * 4 + 3]);
-  const labels = NOTE_LABELS[module];
+  const labelsFull = NOTE_LABELS_FULL[module];
 
   return (
-    <div className="cursor-grid" style={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%', height: '100%', minHeight: 0 }}>
+    <div className="cursor-grid seq-grid" style={{ ['--mod-color' as string]: color } as CSSProperties}>
       {Array.from({ length: GRID_ROWS }, (_, ri) => (
-        <div key={ri} style={{ display: 'flex', gap: 3, flex: 1, minHeight: 0 }}>
+        <div key={ri} className="seq-row">
+          {/* Rotated row label — mobile only (CSS-gated); never affects desktop layout */}
+          <div className="seq-row-header"><span>{labelsFull[ri]}</span></div>
           {groups.map((group, gi) => (
-            <div key={gi} style={{ display: 'flex', gap: 3, flex: 1, marginLeft: gi > 0 ? 6 : 0 }}>
+            <div key={gi} className="seq-group">
               {group.map((ci) => {
                 const isActive = grid[ri][ci];
                 const isHead = ci === playhead;
-                const isHovered = hoveredCell?.[0] === ri && hoveredCell?.[1] === ci;
+                // Inactive non-head cells leave background to CSS (enables mobile alternating tint);
+                // active + playhead cells set it inline so they override the tint.
+                const cellBg = isActive ? (isHead ? '#fff' : color) : (isHead ? '#d8d8d6' : undefined);
                 return (
                   <button
                     key={ci}
+                    className="step-btn step-cell"
                     onClick={() => toggle(ri, ci)}
-                    onMouseEnter={() => setHoveredCell([ri, ci])}
-                    onMouseLeave={() => setHoveredCell(null)}
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      minHeight: 0,
-                      background: isActive
-                        ? isHead ? '#fff' : color
-                        : isHead ? '#d8d8d6' : '#f9f9f7',
-                      border: '2px solid #000',
-                      cursor: 'inherit',
-                      padding: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden',
-                    }}
+                    style={cellBg ? { background: cellBg } : undefined}
                   >
-                    {isHovered && !isActive && (
-                      <span style={{
-                        fontFamily: 'monospace',
-                        fontSize: 10,
-                        fontWeight: 700,
-                        letterSpacing: 2,
-                        color: '#000',
-                        whiteSpace: 'nowrap',
-                        pointerEvents: 'none',
-                      }}>
-                        {labels[ri]}
-                      </span>
+                    {!isActive && (
+                      /* Desktop hover label — position:absolute (in CSS) so it never affects cell sizing */
+                      <span className="cell-label">{labelsFull[ri]}</span>
                     )}
                   </button>
                 );

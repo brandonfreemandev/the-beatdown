@@ -5,9 +5,8 @@ import { usePlayback } from '@/lib/usePlayback';
 import { useUndoShortcuts } from '@/lib/useUndoShortcuts';
 import { useStore, MODULE_COLORS, MODULE_LABELS, MODULES } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
-import TransportBar from './TransportBar';
+import SiteNav from './SiteNav';
 import ModuleControls from './ModuleControls';
-import VaultPanel from './VaultPanel';
 import ArrangementTimeline from './ArrangementTimeline';
 import SubmitModal from './SubmitModal';
 import type { User } from '@supabase/supabase-js';
@@ -15,8 +14,7 @@ import type { User } from '@supabase/supabase-js';
 export default function BeatdownShell() {
   const activeModule = useStore((s) => s.activeModule);
   const setActiveModule = useStore((s) => s.setActiveModule);
-  const toggleVault = useStore((s) => s.toggleVault);
-  const vaultOpen = useStore((s) => s.vaults[activeModule].vaultOpen);
+
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [votesCast, setVotesCast] = useState<number | null>(null);
@@ -46,18 +44,9 @@ export default function BeatdownShell() {
   }, []);
 
   return (
-    <div
-      style={{
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: '#f9f9f7',
-        border: '3px solid #000',
-        overflow: 'hidden',
-      }}
-    >
-      <TransportBar
+    <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', background: '#f9f9f7', borderLeft: '3px solid #000', borderRight: '3px solid #000', borderBottom: '3px solid #000', overflow: 'hidden' }}>
+      <SiteNav
+        currentPage="studio"
         onSubmit={() => setSubmitOpen(true)}
         user={user}
         isAdmin={isAdmin}
@@ -94,33 +83,13 @@ export default function BeatdownShell() {
             </button>
           );
         })}
-        <button
-          onClick={() => toggleVault(activeModule)}
-          style={{
-            width: 80,
-            height: 40,
-            background: vaultOpen ? '#000' : '#f9f9f7',
-            color: vaultOpen ? '#f9f9f7' : '#000',
-            border: 'none',
-            borderLeft: '3px solid #000',
-            fontFamily: 'monospace',
-            fontWeight: 700,
-            fontSize: 10,
-            letterSpacing: 2,
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
-          VAULT {vaultOpen ? '▸' : '◀'}
-        </button>
       </div>
 
       {/* Main area */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
-        <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
+      <div className="main-area">
+        <div style={{ flex: 1, overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
           <ModuleControls module={activeModule} playhead={playhead} isPlaying={isPlaying} onTogglePlay={toggle} />
         </div>
-        {vaultOpen && <VaultPanel module={activeModule} />}
       </div>
 
       <ArrangementTimeline

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ArenaPlayer from '@/components/ArenaPlayer';
-import SiteHeader from '@/components/SiteHeader';
+import SiteNav from '@/components/SiteNav';
 import type { Profile } from '@/lib/supabase/types';
 import type { User } from '@supabase/supabase-js';
 
@@ -75,7 +75,7 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
 
   return (
     <div style={{ fontFamily: 'monospace', background: '#f9f9f7', minHeight: '100vh', color: '#000' }}>
-      <SiteHeader currentPage="arena" user={user} profile={profile} />
+      <SiteNav currentPage="arena" user={user} isAdmin={profile?.is_admin ?? false} votesCast={profile?.votes_cast ?? null} />
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px' }}>
 

@@ -34,15 +34,15 @@ export async function POST(request: Request) {
 
   if (action === 'open_round') {
     // Close any currently open rounds first
-    await auth.service.from('rounds').update({ status: 'closed', closed_at: new Date().toISOString() }).eq('status', 'open');
-    const { data, error } = await auth.service.from('rounds').insert({ status: 'open' }).select().single();
+    await (auth.service.from('rounds') as any).update({ status: 'closed', closed_at: new Date().toISOString() }).eq('status', 'open');
+    const { data, error } = await (auth.service.from('rounds') as any).insert({ status: 'open' }).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ round: data });
   }
 
   if (action === 'close_round') {
     const { roundId } = body;
-    const { error } = await auth.service.from('rounds')
+    const { error } = await (auth.service.from('rounds') as any)
       .update({ status: 'closed', closed_at: new Date().toISOString() })
       .eq('id', roundId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

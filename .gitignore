@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 docs/supabase and google oauth info.md
+
+# local agent tooling config (machine-specific, not project source)
+.claude/

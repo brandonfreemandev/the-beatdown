@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore, MODULE_COLORS } from '@/lib/store';
 import type { ModuleType } from '@/lib/audioEngine';
 
@@ -31,6 +31,13 @@ export default function VaultPanel({ module }: Props) {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const startRename = (id: string, currentName: string) => {
     setEditingId(id);
@@ -46,6 +53,7 @@ export default function VaultPanel({ module }: Props) {
 
   return (
     <div
+      className="vault-panel"
       style={{
         width: 230,
         borderLeft: '3px solid #000',
@@ -55,21 +63,6 @@ export default function VaultPanel({ module }: Props) {
         flexShrink: 0,
       }}
     >
-      {/* Header */}
-      <div
-        style={{
-          background: color,
-          borderBottom: '3px solid #000',
-          padding: '6px 10px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 6,
-        }}
-      >
-        <span style={{ fontWeight: 900, fontSize: 11, letterSpacing: 2, fontFamily: 'monospace' }}>VAULT</span>
-      </div>
-
       {/* Pattern slots */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         {vault.patterns.map((p) => {
@@ -88,12 +81,7 @@ export default function VaultPanel({ module }: Props) {
               }}
             >
               {/* Active indicator stripe */}
-              {isActive && (
-                <div style={{ width: 3, alignSelf: 'stretch', background: color, flexShrink: 0 }} />
-              )}
-              {!isActive && (
-                <div style={{ width: 3, alignSelf: 'stretch', flexShrink: 0 }} />
-              )}
+              <div style={{ width: 8, alignSelf: 'stretch', background: isActive ? color : 'transparent', flexShrink: 0 }} />
 
               {/* Pattern name — click to load, double-click to rename */}
               <button
@@ -121,8 +109,8 @@ export default function VaultPanel({ module }: Props) {
                 <span
                   style={{
                     width: 7, height: 7,
-                    background: isActive ? color : 'transparent',
-                    border: `2px solid ${isActive ? color : '#000'}`,
+                    background: isActive ? '#000' : 'transparent',
+                    border: '2px solid #000',
                     display: 'inline-block',
                     flexShrink: 0,
                   }}
@@ -200,7 +188,7 @@ export default function VaultPanel({ module }: Props) {
               width: '100%',
             }}
           >
-            + NEW PATTERN
+            <span className="vault-new-label-full">+ NEW PATTERN</span><span className="vault-new-label-short">+ NEW</span>
           </button>
         )}
 
@@ -214,7 +202,14 @@ export default function VaultPanel({ module }: Props) {
       </div>
 
       <div style={{ padding: '6px 12px', borderTop: '3px solid #000', fontFamily: 'monospace', fontSize: 9, color: '#666', letterSpacing: 1 }}>
-        {vault.patterns.length}/5 PATTERNS · DOUBLE-CLICK TO RENAME
+        {isMobile ? (
+          <div>{vault.patterns.length}/5 · DOUBLE-CLICK TO RENAME</div>
+        ) : (
+          <div style={{ lineHeight: 1.6 }}>
+            <div>{vault.patterns.length}/5 PATTERNS</div>
+            <div>DOUBLE-CLICK TO RENAME</div>
+          </div>
+        )}
       </div>
     </div>
   );

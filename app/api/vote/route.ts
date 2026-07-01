@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
   if (total >= MIN_VOTES_TO_RESOLVE && newVotesA !== newVotesB) {
     const winnerId = newVotesA > newVotesB ? match.track_a_id : match.track_b_id;
-    await service.rpc('resolve_match', { p_match_id: matchId, p_winner_id: winnerId });
+    await (service.rpc as any)('resolve_match', { p_match_id: matchId, p_winner_id: winnerId });
     return NextResponse.json({ ok: true, resolved: true, winnerId });
   }
 

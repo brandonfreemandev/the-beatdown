@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import SiteHeader from '@/components/SiteHeader';
+import SiteNav from '@/components/SiteNav';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +31,7 @@ export default async function LeaderboardPage() {
 
   return (
     <div style={{ fontFamily: 'monospace', background: '#f9f9f7', minHeight: '100vh', color: '#000' }}>
-      <SiteHeader currentPage="leaderboard" user={user} profile={myProfile} />
+      <SiteNav currentPage="leaderboard" user={user} isAdmin={myProfile?.is_admin ?? false} votesCast={myProfile?.votes_cast ?? null} />
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px' }}>
 

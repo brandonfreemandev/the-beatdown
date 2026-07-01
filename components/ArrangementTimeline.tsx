@@ -1,8 +1,9 @@
 'use client';
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import {
   useStore, MODULE_COLORS, MODULE_LABELS, MODULES, MAX_ARRANGEMENT_SEC,
 } from '@/lib/store';
+import type { ModuleType } from '@/lib/audioEngine';
 
 interface Props {
   timelineSec: number;
@@ -18,6 +19,8 @@ const ROW_HEIGHT = 36;
 const HANDLE_HEIGHT = 28;
 const LABEL_WIDTH = 52;
 
+const MODULE_INITIAL: Record<string, string> = { drum: 'D', bass: 'B', pad: 'P', synth: 'S', arp: 'A' };
+
 export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop, onToggleArr, onToggleLoop, onSeek, onReturnToStart }: Props) {
   const timelineOpen = useStore((s) => s.timelineOpen);
   const toggleTimeline = useStore((s) => s.toggleTimeline);
@@ -27,7 +30,51 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
   const removeBlock = useStore((s) => s.removeBlock);
   const moveBlock = useStore((s) => s.moveBlock);
   const bpm = useStore((s) => s.bpm);
+  const mutedModules = useStore((s) => s.mutedModules);
+  const soloedModules = useStore((s) => s.soloedModules);
+  const toggleMute = useStore((s) => s.toggleMute);
+  const toggleSolo = useStore((s) => s.toggleSolo);
   const railRef = useRef<HTMLDivElement>(null);
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  // Ghost block: { module, snappedSec } while hovering empty track space
+  const [ghost, setGhost] = useState<{ module: ModuleType; snappedSec: number; durSec: number } | null>(null);
+
+  const handleTrackMouseMove = useCallback(
+    (module: ModuleType, e: React.MouseEvent<HTMLDivElement>) => {
+      if (!railRef.current) return;
+      const rect = railRef.current.getBoundingClientRect();
+      const trackWidth = rect.width - LABEL_WIDTH;
+      const x = Math.max(0, e.clientX - rect.left - LABEL_WIDTH);
+      const rawSec = (x / trackWidth) * MAX_ARRANGEMENT_SEC;
+      const vault = useStore.getState().vaults[module];
+      const p = vault.patterns.find((pt) => pt.id === vault.activePatternId);
+      if (!p) return;
+      const durSec = (p.data.durationBeats / bpm) * 60;
+      const snappedSec = Math.round(rawSec / durSec) * durSec;
+
+      // Hide ghost if it would overlap an existing block
+      const tl = useStore.getState().timeline;
+      const overlaps = tl.some(
+        (b) =>
+          b.moduleType === module &&
+          !(snappedSec >= b.startSec + b.durationSec || snappedSec + durSec <= b.startSec)
+      );
+      if (overlaps || snappedSec + durSec > MAX_ARRANGEMENT_SEC) {
+        setGhost(null);
+      } else {
+        setGhost({ module, snappedSec, durSec });
+      }
+    },
+    [bpm]
+  );
 
   const secToPercent = (sec: number) => (sec / MAX_ARRANGEMENT_SEC) * 100;
 
@@ -167,59 +214,43 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
           <span style={{ fontSize: 12 }}>{timelineOpen ? '▼' : '▲'}</span>
         </button>
 
-        {/* Arrangement transport */}
-        <div style={{ display: 'flex', alignItems: 'stretch', borderLeft: '2px solid #333', flexShrink: 0 }}>
-          <button
-            onClick={onToggleLoop}
-            title="Toggle loop"
-            style={{
-              padding: '0 10px',
-              background: arrLoop ? '#f9f9f7' : 'transparent',
-              color: arrLoop ? '#000' : '#f9f9f7',
-              border: 'none',
-              borderRight: '2px solid #333',
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              fontSize: 9,
-              letterSpacing: 2,
-              cursor: 'pointer',
-            }}
-          >
-            ⟳ LOOP
-          </button>
+        {/* Arrangement transport — return, play (primary), loop, matching standard DAW transport order */}
+        <div style={{ display: 'flex', alignItems: 'stretch', borderLeft: '1px solid #3a3a3a', flexShrink: 0 }}>
           <button
             onClick={onReturnToStart}
+            className="arr-return"
+            aria-label="Return to start"
             title="Return to start"
-            style={{
-              padding: '0 10px',
-              background: 'transparent',
-              color: '#f9f9f7',
-              border: 'none',
-              borderRight: '2px solid #333',
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              fontSize: 11,
-              cursor: 'pointer',
-            }}
           >
-            ⏮
+            <svg width="14" height="14" viewBox="0 0 14 14">
+              <rect x="1" y="1" width="2.5" height="12" fill="currentColor" />
+              <path d="M13 1 L4 7 L13 13 Z" fill="currentColor" />
+            </svg>
           </button>
           <button
             onClick={onToggleArr}
-            title="Play/pause arrangement"
-            style={{
-              padding: '0 14px',
-              background: arrIsPlaying ? '#e8212b' : 'transparent',
-              color: '#f9f9f7',
-              border: 'none',
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              fontSize: 9,
-              letterSpacing: 2,
-              cursor: 'pointer',
-            }}
+            className={`arr-play${arrIsPlaying ? ' playing' : ''}`}
+            aria-label={arrIsPlaying ? 'Pause arrangement' : 'Play arrangement'}
+            title={arrIsPlaying ? 'Pause arrangement' : 'Play arrangement'}
           >
-            {arrIsPlaying ? '⏸ PAUSE' : '▶ PLAY ARR'}
+            {arrIsPlaying ? (
+              <svg width="14" height="14" viewBox="0 0 14 14">
+                <rect x="2" y="1" width="4" height="12" fill="currentColor" />
+                <rect x="8" y="1" width="4" height="12" fill="currentColor" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 14 14"><path d="M2.5 1 L12.5 7 L2.5 13 Z" fill="currentColor" /></svg>
+            )}
+          </button>
+          <button
+            onClick={onToggleLoop}
+            className={`arr-loop${arrLoop ? ' active' : ''}`}
+            aria-label="Toggle loop"
+            title="Toggle loop"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="currentColor" transform="scale(-1,1) translate(-24,0)" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+            </svg>
           </button>
         </div>
       </div>
@@ -283,6 +314,8 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
           {MODULES.map((module, i) => {
             const color = MODULE_COLORS[module];
             const rowBlocks = timeline.filter((b) => b.moduleType === module);
+            const hasSolo = soloedModules.size > 0;
+            const isDimmed = mutedModules.has(module) || (hasSolo && !soloedModules.has(module));
             return (
               <div
                 key={module}
@@ -295,28 +328,64 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                   position: 'relative',
                 }}
               >
-                {/* Label */}
+                {/* Label: left color gutter + M/S text buttons */}
                 <div
                   style={{
                     width: LABEL_WIDTH,
                     flexShrink: 0,
-                    background: color,
                     borderRight: '2px solid #000',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: 'monospace',
-                    fontWeight: 900,
-                    fontSize: 8,
-                    letterSpacing: 2,
-                    pointerEvents: 'none',
+                    cursor: 'default',
+                    background: '#f9f9f7',
                   }}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  {MODULE_LABELS[module]}
+                  {/* 8px color stripe */}
+                  <div style={{ width: 8, background: color, flexShrink: 0 }} />
+                  {/* M button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleMute(module); }}
+                    title="Mute"
+                    style={{
+                      flex: 1,
+                      border: 'none',
+                      background: mutedModules.has(module) ? '#000' : 'transparent',
+                      color: mutedModules.has(module) ? '#fff' : '#000',
+                      fontFamily: 'monospace',
+                      fontWeight: 900,
+                      fontSize: 9,
+                      letterSpacing: 1,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    M
+                  </button>
+                  {/* S button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleSolo(module); }}
+                    title="Solo"
+                    style={{
+                      flex: 1,
+                      border: 'none',
+                      background: soloedModules.has(module) ? '#000' : 'transparent',
+                      color: soloedModules.has(module) ? '#fff' : '#000',
+                      fontFamily: 'monospace',
+                      fontWeight: 900,
+                      fontSize: 9,
+                      letterSpacing: 1,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    S
+                  </button>
                 </div>
 
                 {/* Track area */}
-                <div style={{ flex: 1, position: 'relative' }}>
+                <div
+                  style={{ flex: 1, position: 'relative', overflow: 'visible' }}
+                  onMouseMove={(e) => handleTrackMouseMove(module, e)}
+                  onMouseLeave={() => setGhost(null)}
+                >
                   {/* Playhead */}
                   <div
                     style={{
@@ -328,6 +397,32 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                       zIndex: 10,
                     }}
                   />
+
+                  {/* Ghost block preview — desktop only */}
+                  {!isMobile && ghost?.module === module && (
+                    <div
+                      className="ghost-block"
+                      style={{
+                        position: 'absolute',
+                        left: `${secToPercent(ghost.snappedSec)}%`,
+                        width: `${secToPercent(ghost.durSec)}%`,
+                        top: 4, bottom: 4,
+                        background: 'transparent',
+                        border: '2px dashed #000',
+                        opacity: 0.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        paddingLeft: 5,
+                        overflow: 'hidden',
+                        pointerEvents: 'none',
+                        zIndex: 4,
+                      }}
+                    >
+                      <span style={{ fontFamily: 'monospace', fontSize: 8, fontWeight: 700, letterSpacing: 1, whiteSpace: 'nowrap' }}>
+                        {patternName(module, vaults[module].activePatternId ?? '')}
+                      </span>
+                    </div>
+                  )}
 
                   {rowBlocks.map((block) => {
                     const left = secToPercent(block.startSec);
@@ -344,6 +439,7 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                           width: `${width}%`,
                           top: 4, bottom: 4,
                           background: color,
+                          opacity: isDimmed ? 0.4 : 1,
                           border: '2px solid #000',
                           cursor: 'grab',
                           display: 'flex',
@@ -354,8 +450,11 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                           zIndex: 5,
                         }}
                       >
-                        <span style={{ fontFamily: 'monospace', fontSize: 8, fontWeight: 700, letterSpacing: 1, whiteSpace: 'nowrap' }}>
+                        <span className="block-label-full" style={{ fontFamily: 'monospace', fontSize: 8, fontWeight: 700, letterSpacing: 1, whiteSpace: 'nowrap' }}>
                           {patternName(module, block.patternId)}
+                        </span>
+                        <span className="block-label-short" style={{ fontFamily: 'monospace', fontSize: 8, fontWeight: 700, letterSpacing: 0, whiteSpace: 'nowrap' }}>
+                          {MODULE_INITIAL[module]}{vaults[module].patterns.findIndex(p => p.id === block.patternId) + 1}
                         </span>
                       </div>
                     );
@@ -367,7 +466,8 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
 
           {/* Footer */}
           <div style={{ borderTop: '2px solid #000', padding: '4px 12px', fontFamily: 'monospace', fontSize: 9, color: '#666', letterSpacing: 1, flexShrink: 0 }}>
-            CLICK TO PLACE · DRAG TO MOVE · RIGHT-CLICK TO REMOVE · MAX 60s
+            <span className="arr-footer-full">CLICK TO PLACE · DRAG TO MOVE · RIGHT-CLICK TO REMOVE · MAX 60s</span>
+            <span className="arr-footer-short">TAP · DRAG · HOLD TO REMOVE · 60s</span>
           </div>
         </div>
       )}

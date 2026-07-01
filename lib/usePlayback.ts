@@ -81,7 +81,10 @@ export function usePlayback() {
     const playSec = arrStepRef.current * secPerStep;
     setTimelineSec(playSec);
 
+    const hasSolo = state.soloedModules.size > 0;
     for (const module of MODULES) {
+      if (state.mutedModules.has(module)) continue;
+      if (hasSolo && !state.soloedModules.has(module)) continue;
       const block = state.timeline.find(
         (b) => b.moduleType === module && playSec >= b.startSec && playSec < b.startSec + b.durationSec
       );

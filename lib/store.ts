@@ -62,12 +62,16 @@ interface AppState {
   vaults: Record<ModuleType, ModuleVault>;
   grids: Record<ModuleType, Grid>;
   moduleSettings: Record<ModuleType, ModuleSettings>;
+  mutedModules: Set<ModuleType>;
+  soloedModules: Set<ModuleType>;
   timeline: TimelineBlock[];
   timelineOpen: boolean;
   bpm: number;
 
   setActiveModule: (m: ModuleType) => void;
   setModuleSettings: (module: ModuleType, settings: Partial<ModuleSettings>) => void;
+  toggleMute: (module: ModuleType) => void;
+  toggleSolo: (module: ModuleType) => void;
   setActivePattern: (module: ModuleType, id: PatternId) => void;
   toggleVault: (module: ModuleType) => void;
   addPattern: (module: ModuleType) => void;
@@ -103,7 +107,7 @@ function seedPattern(module: ModuleType, index: number): Pattern {
     moduleType: module,
     grid: emptyGrid(),
     data: {
-      patternName: `${MODULE_LABELS[module]}_${String.fromCharCode(65 + index)}`,
+      patternName: `${MODULE_LABELS[module]} ${index + 1}`,
       durationBeats: 8,
       notes: [],
       activeModules: { [module]: true },
@@ -137,6 +141,8 @@ export const useStore = create<AppState>()(
   vaults: initialVaults,
   grids: initialGrids,
   moduleSettings: initialModuleSettings,
+  mutedModules: new Set<ModuleType>(),
+  soloedModules: new Set<ModuleType>(),
   timeline: [],
   timelineOpen: true,
   bpm: 120,
@@ -175,7 +181,7 @@ export const useStore = create<AppState>()(
         moduleType: module,
         grid: emptyGrid(),
         data: {
-          patternName: `${MODULE_LABELS[module]}_${String.fromCharCode(65 + idx)}`,
+          patternName: `${MODULE_LABELS[module]} ${idx + 1}`,
           durationBeats: 8,
           notes: [],
           activeModules: { [module]: true },
@@ -331,6 +337,16 @@ export const useStore = create<AppState>()(
   toggleTimeline: () => set((s) => ({ timelineOpen: !s.timelineOpen })),
 
   setBpm: (bpm) => set({ bpm }),
+  toggleMute: (module) => set((s) => {
+    const next = new Set(s.mutedModules);
+    next.has(module) ? next.delete(module) : next.add(module);
+    return { mutedModules: next };
+  }),
+  toggleSolo: (module) => set((s) => {
+    const next = new Set(s.soloedModules);
+    next.has(module) ? next.delete(module) : next.add(module);
+    return { soloedModules: next };
+  }),
   setModuleSettings: (module, settings) =>
     set((s) => ({
       moduleSettings: {
