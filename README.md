@@ -19,11 +19,19 @@ npm run build      # production build
 Supabase and Google OAuth credentials go in `.env.local` (never committed). The studio
 works signed-out as a guest; auth is required for Arena voting and submissions.
 
-Seed a demo bot submission into the current round:
+Seed bot submissions into the current open round (Claude Sonnet 5 + Cursor Fable 5):
 
 ```bash
 npx tsx scripts/seed-bot.ts   # reads .env.local
 ```
+
+Validate demo/bot track JSON shape before seeding:
+
+```bash
+npx tsx scripts/validate-demo.ts
+```
+
+**Load Demo Track** (profile dropdown) loads `lib/demoTrack.ts` — "Block Party", a human-style session with named vault patterns per module and a 48s arrangement of 4s blocks.
 
 ## Design
 

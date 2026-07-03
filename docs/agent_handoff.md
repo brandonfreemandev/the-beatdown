@@ -1,7 +1,7 @@
 # The Beatdown — Agent Handoff
 
-**Last updated:** 2026-07-02  
-**Status:** MVP live. Full-fidelity arrangement playback, leaderboard track previews, and dark mode shipped.
+**Last updated:** 2026-07-03  
+**Status:** MVP live. Dark mode, Block Party demo, leaderboard/Arena playback, bot tracks, vault-dropdown fix shipped.
 
 ---
 
@@ -64,7 +64,8 @@ Timeline stores `{ patternId, moduleType, startSec, durationSec }` — ID refere
 | `app/layout.tsx` | Root layout — `data-theme` attribute + pre-paint theme script (no flash) |
 | `app/arena/page.tsx` + `ArenaClient.tsx` | Arena — How It Works card, match cards, voting, vote bar, matchmaker |
 | `app/leaderboard/page.tsx` + `LeaderboardClient.tsx` | ELO leaderboard — podium, stats, tier badges, per-row track playback |
-| `scripts/seed-bot.ts` | Seeds a bot user + demo-track submission (reads `.env.local`) |
+| `scripts/seed-bot.ts` | Seeds Claude Sonnet 5 + Cursor Fable 5 bot users/submissions (reads `.env.local`, update-in-place on re-run) |
+| `scripts/validate-demo.ts` | Structural validation for `DEMO_TRACK` and `SONNET_TRACK` (grid dims, vault refs, block overlap) |
 | `app/api/submit/route.ts` | Track submission — profile auto-create, Gatekeeper vote gate |
 | `app/api/matchmaker/route.ts` | Gemini 2.0 Flash matchmaker — pairs submissions into matches |
 | `app/api/vote/route.ts` | Vote casting — auto-resolves match + updates ELO at 3 votes |
@@ -174,6 +175,8 @@ WAV files in `public/samples/drums/`.
 - **Google OAuth** profile creation trigger may not fire; submit route has explicit fallback
 - **Credentials file** `docs/supabase and google oauth info.md` is `.gitignore`d — never commit it
 - Service role key was rotated after a security incident; publishable + Google AI keys left (low risk, user decision)
+- **Session load grid sync** — `ProfileButton.applySessionData` sets each module's working `grids[m]` from that vault's `activePatternId` before entering the store. `loadPatternToGrid` auto-saves the current grid into the active vault pattern on switch; if `grids` and `activePatternId` disagree (e.g. old demo snapshots), the first dropdown click would corrupt vault data and make patterns look identical
+- **Demo / bot track shape** — `lib/demoTrack.ts` ("Block Party") uses multiple named 16-step patterns per module and standard 4s timeline blocks (`durationBeats: 8` @ 120 BPM). `lib/sonnetTrack.ts` is the simpler single-block bot layout; `lib/fableTrack.ts` re-exports the demo for the Fable 5 Arena entry
 
 ---
 
@@ -201,6 +204,7 @@ WAV files in `public/samples/drums/`.
 - [x] Leaderboard per-row play buttons — hear any producer's latest track in place
 - [x] Bundled demo track (`lib/demoTrack.ts`) — multi-pattern "Block Party" arrangement, Load Demo Track menu item
 - [x] Bot submissions via `scripts/seed-bot.ts` — Sonnet 5 (simple) and Fable 5 (same as demo)
+- [x] Session/vault grid sync on load — distinct patterns visible in vault dropdown after Load Demo Track
 - [x] Dark mode — semantic CSS variable palette, dropdown toggle, localStorage persistence, no-flash inline script
 - [x] Sequencer min-height row floor — short windows scroll instead of crushing rows
 
