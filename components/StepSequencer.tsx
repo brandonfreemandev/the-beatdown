@@ -63,7 +63,8 @@ export default function StepSequencer({ module, playhead }: Props) {
                 const isHead = ci === playhead;
                 // Inactive non-head cells leave background to CSS (enables mobile alternating tint);
                 // active + playhead cells set it inline so they override the tint.
-                const cellBg = isActive ? (isHead ? '#fff' : color) : (isHead ? '#d8d8d6' : undefined);
+                // The white flash on active head cells is intentional in both themes.
+                const cellBg = isActive ? (isHead ? '#fff' : color) : (isHead ? 'var(--bd-cell-head)' : undefined);
                 return (
                   <button
                     key={ci}

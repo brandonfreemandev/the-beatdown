@@ -20,7 +20,8 @@ export default function ArenaPlayer({ arrangement, color, label, title }: Props)
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
       {/* Header */}
       <div style={{
-        background: color, borderBottom: '3px solid #000',
+        // Fixed accent header — text and button on it stay literal black/white in both themes
+        background: color, color: '#000', borderBottom: '3px solid var(--bd-ink)',
         padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
         <div>
@@ -44,7 +45,7 @@ export default function ArenaPlayer({ arrangement, color, label, title }: Props)
       {/* Mini grid — shows whichever pattern is actually active per module at the current time.
           Older submissions (pre-dating the vaults field) have no blocks to resolve, so fall
           back to their flat saved grid, matching how they always rendered before this fix. */}
-      <div style={{ padding: '12px 14px 10px', flex: 1, background: '#f9f9f7' }}>
+      <div style={{ padding: '12px 14px 10px', flex: 1, background: 'var(--bd-bg)' }}>
         {MODULES.map((mod) => {
           const modColor = MODULE_COLORS[mod as ModuleType];
           const hasRichData = !!arrangement.vaults && Object.keys(arrangement.vaults).length > 0;
@@ -61,7 +62,7 @@ export default function ArenaPlayer({ arrangement, color, label, title }: Props)
               <div style={{
                 width: 36, flexShrink: 0,
                 fontFamily: 'monospace', fontSize: 7, fontWeight: 900, letterSpacing: 1,
-                color: isActiveNow ? '#000' : '#bbb',
+                color: isActiveNow ? 'var(--bd-ink)' : 'var(--bd-hint)',
               }}>
                 {MODULE_LABELS[mod as ModuleType]}
               </div>
@@ -74,8 +75,8 @@ export default function ArenaPlayer({ arrangement, color, label, title }: Props)
                       key={ci}
                       style={{
                         flex: 1,
-                        background: hasNote ? (isHead ? '#fff' : modColor) : isHead ? '#ddd' : '#ebebeb',
-                        border: '1px solid rgba(0,0,0,0.2)',
+                        background: hasNote ? (isHead ? '#fff' : modColor) : isHead ? 'var(--bd-cell-head)' : 'var(--bd-cell)',
+                        border: '1px solid var(--bd-grid-line)',
                         marginLeft: ci > 0 && ci % 4 === 0 ? 2 : 0,
                       }}
                     />
@@ -85,7 +86,7 @@ export default function ArenaPlayer({ arrangement, color, label, title }: Props)
             </div>
           );
         })}
-        <div style={{ marginTop: 8, fontFamily: 'monospace', fontSize: 9, letterSpacing: 1, color: '#999' }}>
+        <div style={{ marginTop: 8, fontFamily: 'monospace', fontSize: 9, letterSpacing: 1, color: 'var(--bd-faint)' }}>
           {arrangement.bpm} BPM
         </div>
       </div>

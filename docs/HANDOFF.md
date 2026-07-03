@@ -1,5 +1,10 @@
 # The Beatdown — Engineering Handoff
 
+> **⚠ Superseded** — this is a historical Sprint 1–2 snapshot. The living, current handoff
+> is [`docs/agent_handoff.md`](./agent_handoff.md) (Sprint 3 shipped: Supabase, Arena, ELO,
+> dark mode theming, and more). The design palette below predates the semantic CSS variable
+> system in `app/globals.css`.
+
 _Last updated: 2026-06-28 · Sprint 2 complete_
 
 ---

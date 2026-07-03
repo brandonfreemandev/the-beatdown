@@ -44,7 +44,7 @@ export default function BeatdownShell() {
   }, []);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', background: '#f9f9f7', borderLeft: '3px solid #000', borderRight: '3px solid #000', borderBottom: '3px solid #000', overflow: 'hidden' }}>
+    <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bd-bg)', borderLeft: '3px solid var(--bd-ink)', borderRight: '3px solid var(--bd-ink)', borderBottom: '3px solid var(--bd-ink)', overflow: 'hidden' }}>
       <SiteNav
         currentPage="studio"
         onSubmit={() => setSubmitOpen(true)}
@@ -54,7 +54,7 @@ export default function BeatdownShell() {
       />
 
       {/* Module Tabs */}
-      <div style={{ display: 'flex', flexShrink: 0, borderBottom: '3px solid #000' }}>
+      <div style={{ display: 'flex', flexShrink: 0, borderBottom: '3px solid var(--bd-ink)' }}>
         {MODULES.map((m) => {
           const isActive = m === activeModule;
           return (
@@ -64,10 +64,11 @@ export default function BeatdownShell() {
               style={{
                 flex: 1,
                 height: 40,
-                background: isActive ? MODULE_COLORS[m] : '#f9f9f7',
-                color: '#000',
+                background: isActive ? MODULE_COLORS[m] : 'var(--bd-bg)',
+                // Module accents are fixed mid-tones — text on them stays literal black in both themes
+                color: isActive ? '#000' : 'var(--bd-ink)',
                 border: 'none',
-                borderRight: m !== 'arp' ? '3px solid #000' : 'none',
+                borderRight: m !== 'arp' ? '3px solid var(--bd-ink)' : 'none',
                 fontFamily: 'monospace',
                 fontWeight: 900,
                 fontSize: 11,
@@ -78,7 +79,7 @@ export default function BeatdownShell() {
             >
               {MODULE_LABELS[m]}
               {isActive && (
-                <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: '#000' }} />
+                <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'var(--bd-ink)' }} />
               )}
             </button>
           );

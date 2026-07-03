@@ -36,13 +36,13 @@ export default function LeaderboardClient({ rankings, user, myProfile }: Props) 
   const total = rankings.length;
 
   return (
-    <div style={{ fontFamily: 'monospace', background: '#f9f9f7', minHeight: '100vh', color: '#000' }}>
+    <div style={{ fontFamily: 'monospace', background: 'var(--bd-bg)', minHeight: '100vh', color: 'var(--bd-ink)' }}>
       <SiteNav currentPage="leaderboard" user={user} isAdmin={myProfile?.is_admin ?? false} votesCast={myProfile?.votes_cast ?? null} />
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px' }}>
 
         {/* Stats header */}
-        <div style={{ display: 'flex', border: '3px solid #000', marginBottom: 32 }}>
+        <div style={{ display: 'flex', border: '3px solid var(--bd-ink)', marginBottom: 32 }}>
           {[
             { label: 'PRODUCERS', value: total },
             { label: 'TOP ELO', value: rankings[0]?.elo_rating ?? '—' },
@@ -50,20 +50,20 @@ export default function LeaderboardClient({ rankings, user, myProfile }: Props) 
           ].map(({ label, value }, i) => (
             <div key={label} style={{
               flex: 1, padding: '14px 20px',
-              borderRight: i < 2 ? '3px solid #000' : 'none',
+              borderRight: i < 2 ? '3px solid var(--bd-ink)' : 'none',
               display: 'flex', flexDirection: 'column', gap: 4,
             }}>
-              <div style={{ fontSize: 8, letterSpacing: 2, color: '#666', fontWeight: 700 }}>{label}</div>
+              <div style={{ fontSize: 8, letterSpacing: 2, color: 'var(--bd-muted)', fontWeight: 700 }}>{label}</div>
               <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1 }}>{value}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ border: '3px solid #000' }}>
+        <div style={{ border: '3px solid var(--bd-ink)' }}>
           {/* Column header */}
           <div style={{
             display: 'grid', gridTemplateColumns: '52px 40px 1fr 90px 80px 110px',
-            background: '#000', color: '#f9f9f7',
+            background: 'var(--bd-ink)', color: 'var(--bd-on-ink)',
             padding: '10px 16px', fontSize: 9, letterSpacing: 2, fontWeight: 700,
           }}>
             <span>RANK</span>
@@ -87,12 +87,13 @@ export default function LeaderboardClient({ rankings, user, myProfile }: Props) 
                   display: 'grid', gridTemplateColumns: '52px 40px 1fr 90px 80px 110px',
                   alignItems: 'center',
                   padding: isPodium ? '10px 16px' : '8px 16px',
-                  borderBottom: '2px solid #000',
-                  background: isMe ? '#000' : medalBg ?? (i % 2 === 0 ? '#f9f9f7' : '#f2f2f0'),
-                  color: isMe ? '#f9f9f7' : '#000',
+                  borderBottom: '2px solid var(--bd-ink)',
+                  background: isMe ? 'var(--bd-ink)' : medalBg ?? (i % 2 === 0 ? 'var(--bd-bg)' : 'var(--bd-bg-alt)'),
+                  // Medal backgrounds are fixed accents — text on them stays literal black in both themes
+                  color: isMe ? 'var(--bd-on-ink)' : medalBg ? '#000' : 'var(--bd-ink)',
                   fontSize: 11,
                   fontWeight: isPodium || isMe ? 700 : 400,
-                  borderLeft: isPodium ? `5px solid ${MEDAL_BG[i]}` : isMe ? '5px solid #000' : '5px solid transparent',
+                  borderLeft: isPodium ? `5px solid ${MEDAL_BG[i]}` : isMe ? '5px solid var(--bd-ink)' : '5px solid transparent',
                 }}
               >
                 <span style={{ fontWeight: 900, fontSize: isPodium ? 14 : 11 }}>
@@ -110,7 +111,7 @@ export default function LeaderboardClient({ rankings, user, myProfile }: Props) 
                 <span style={{ textAlign: 'right', fontWeight: 900, fontSize: isPodium ? 13 : 11 }}>
                   {p.elo_rating}
                 </span>
-                <span style={{ textAlign: 'right', color: isMe ? '#aaa' : '#666' }}>
+                <span style={{ textAlign: 'right', color: isMe ? 'var(--bd-on-ink-muted)' : medalBg ? '#666' : 'var(--bd-muted)' }}>
                   {p.votes_cast}
                 </span>
                 <span style={{ textAlign: 'right' }}>
@@ -126,7 +127,7 @@ export default function LeaderboardClient({ rankings, user, myProfile }: Props) 
           })}
 
           {rankings.length === 0 && (
-            <div style={{ padding: '64px 32px', textAlign: 'center', fontSize: 11, color: '#666', letterSpacing: 2 }}>
+            <div style={{ padding: '64px 32px', textAlign: 'center', fontSize: 11, color: 'var(--bd-muted)', letterSpacing: 2 }}>
               NO RANKINGS YET
             </div>
           )}

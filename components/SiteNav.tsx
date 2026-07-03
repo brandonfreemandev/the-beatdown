@@ -25,12 +25,12 @@ const PAGES: { key: Page; label: string; href: string }[] = [
 function FadersIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-      <g stroke="#000" strokeWidth="2">
+      <g stroke="currentColor" strokeWidth="2">
         <line x1="5" y1="4" x2="5" y2="20" />
         <line x1="12" y1="4" x2="12" y2="20" />
         <line x1="19" y1="4" x2="19" y2="20" />
       </g>
-      <g fill="#000">
+      <g fill="currentColor">
         <rect x="2.5" y="7" width="5" height="5" />
         <rect x="9.5" y="13" width="5" height="5" />
         <rect x="16.5" y="9" width="5" height="5" />
@@ -42,7 +42,7 @@ function FadersIcon() {
 function TrophyIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-      <g fill="none" stroke="#000" strokeWidth="2" strokeLinejoin="miter">
+      <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="miter">
         <path d="M7 4 H17 V8 C17 12 14 13 12 13 C10 13 7 12 7 8 Z" />
         <path d="M7 5 C4 5 4 9 7 9" />
         <path d="M17 5 C20 5 20 9 17 9" />
@@ -67,7 +67,7 @@ export default function SiteNav({ currentPage, user, isAdmin = false, votesCast 
   const gateBlocked = user !== null && votesCast !== null && votesCast < VOTES_REQUIRED;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'stretch', height: 48, borderTop: '3px solid #000', borderBottom: '3px solid #000', background: '#f9f9f7', flexShrink: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'stretch', height: 48, borderTop: '3px solid var(--bd-ink)', borderBottom: '3px solid var(--bd-ink)', background: 'var(--bd-bg)', flexShrink: 0 }}>
 
       {/* Logo — always full text, on every viewport */}
       <a href="/" className="nav-logo">THE BEATDOWN</a>

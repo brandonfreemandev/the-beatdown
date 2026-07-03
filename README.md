@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Beatdown
 
-## Getting Started
+Competitive web music sequencer. Compose a 60-second arrangement with a fixed 5-module
+palette (Drums, Bass, Pads, Synth, Arp), submit it to blind 1-vs-1 Arena battles, vote on
+other producers' tracks, and climb the ELO leaderboard. Skill wins over gear — everyone
+uses the same tools.
 
-First, run the development server:
+**Stack:** Next.js 16 (App Router) · TypeScript · Supabase (Postgres + Auth + RLS) ·
+Web Audio API · Zustand + zundo · Gemini 2.0 Flash (matchmaker)
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
+npm run build      # production build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Supabase and Google OAuth credentials go in `.env.local` (never committed). The studio
+works signed-out as a guest; auth is required for Arena voting and submissions.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Seed a demo bot submission into the current round:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npx tsx scripts/seed-bot.ts   # reads .env.local
+```
 
-## Learn More
+## Design
 
-To learn more about Next.js, take a look at the following resources:
+Mondrian-Brutalist: rectangles only, no rounded corners, no shadows, no gradients,
+monospace everywhere. Light and dark themes are driven by semantic CSS variables in
+`app/globals.css` (`--bd-ink`, `--bd-bg`, …) — never hardcode a color; see the theming
+section in `docs/agent_handoff.md`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Docs
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `docs/agent_handoff.md` — **the living engineering handoff** (architecture, key files, DB schema, theming rules, next steps)
+- `docs/VISION.md` — high-level product scope
+- `docs/council-transcript.md` — design council decisions (source of truth for aesthetics)
+- `docs/HANDOFF.md` — historical Sprint 1–2 snapshot (superseded)

@@ -170,8 +170,8 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
   return (
     <div
       style={{
-        borderTop: '3px solid #000',
-        background: '#f9f9f7',
+        borderTop: '3px solid var(--bd-ink)',
+        background: 'var(--bd-bg)',
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
@@ -182,8 +182,8 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
       <div
         style={{
           height: HANDLE_HEIGHT,
-          background: '#000',
-          color: '#f9f9f7',
+          background: 'var(--bd-ink)',
+          color: 'var(--bd-on-ink)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -196,7 +196,7 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
             flex: 1,
             height: '100%',
             background: 'transparent',
-            color: '#f9f9f7',
+            color: 'var(--bd-on-ink)',
             border: 'none',
             fontFamily: 'monospace',
             fontWeight: 700,
@@ -215,7 +215,7 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
         </button>
 
         {/* Arrangement transport — return, play (primary), loop, matching standard DAW transport order */}
-        <div style={{ display: 'flex', alignItems: 'stretch', borderLeft: '1px solid #3a3a3a', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'stretch', borderLeft: '1px solid var(--bd-ink-seam)', flexShrink: 0 }}>
           <button
             onClick={onReturnToStart}
             className="arr-return"
@@ -261,9 +261,9 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
           style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
         >
           {/* Ruler */}
-          <div style={{ height: 20, borderBottom: '2px solid #000', position: 'relative', flexShrink: 0, display: 'flex' }}>
+          <div style={{ height: 20, borderBottom: '2px solid var(--bd-ink)', position: 'relative', flexShrink: 0, display: 'flex' }}>
             {/* Label-width spacer so ruler aligns with track area */}
-            <div style={{ width: LABEL_WIDTH, flexShrink: 0, borderRight: '2px solid #000', background: '#f9f9f7' }} />
+            <div style={{ width: LABEL_WIDTH, flexShrink: 0, borderRight: '2px solid var(--bd-ink)', background: 'var(--bd-bg)' }} />
           <div style={{ flex: 1, position: 'relative', cursor: 'pointer' }} onClick={(e) => {
               if (!railRef.current) return;
               const rect = railRef.current.getBoundingClientRect();
@@ -281,7 +281,7 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                     position: 'absolute',
                     left: `${secToPercent(sec)}%`,
                     top: 0, bottom: 0,
-                    borderLeft: '1px solid #000',
+                    borderLeft: '1px solid var(--bd-ink)',
                     paddingLeft: 3,
                     display: 'flex',
                     alignItems: 'center',
@@ -304,8 +304,8 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                 }}
               >
                 {/* Caret handle */}
-                <div style={{ width: 8, height: 8, background: '#e8212b', clipPath: 'polygon(0 0, 100% 0, 50% 100%)', flexShrink: 0 }} />
-                <div style={{ position: 'absolute', left: 3, top: 0, bottom: 0, width: 2, background: '#e8212b' }} />
+                <div style={{ width: 8, height: 8, background: 'var(--bd-red)', clipPath: 'polygon(0 0, 100% 0, 50% 100%)', flexShrink: 0 }} />
+                <div style={{ position: 'absolute', left: 3, top: 0, bottom: 0, width: 2, background: 'var(--bd-red)' }} />
               </div>
           </div>{/* end track area */}
           </div>{/* end ruler */}
@@ -322,7 +322,7 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                 onClick={(e) => handleRowClick(module, e)}
                 style={{
                   height: ROW_HEIGHT,
-                  borderBottom: i < MODULES.length - 1 ? '2px solid #000' : 'none',
+                  borderBottom: i < MODULES.length - 1 ? '2px solid var(--bd-ink)' : 'none',
                   display: 'flex',
                   cursor: 'crosshair',
                   position: 'relative',
@@ -333,10 +333,10 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                   style={{
                     width: LABEL_WIDTH,
                     flexShrink: 0,
-                    borderRight: '2px solid #000',
+                    borderRight: '2px solid var(--bd-ink)',
                     display: 'flex',
                     cursor: 'default',
-                    background: '#f9f9f7',
+                    background: 'var(--bd-bg)',
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -349,8 +349,8 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                     style={{
                       flex: 1,
                       border: 'none',
-                      background: mutedModules.has(module) ? '#000' : 'transparent',
-                      color: mutedModules.has(module) ? '#fff' : '#000',
+                      background: mutedModules.has(module) ? 'var(--bd-ink)' : 'transparent',
+                      color: mutedModules.has(module) ? 'var(--bd-on-ink)' : 'var(--bd-ink)',
                       fontFamily: 'monospace',
                       fontWeight: 900,
                       fontSize: 9,
@@ -367,8 +367,8 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                     style={{
                       flex: 1,
                       border: 'none',
-                      background: soloedModules.has(module) ? '#000' : 'transparent',
-                      color: soloedModules.has(module) ? '#fff' : '#000',
+                      background: soloedModules.has(module) ? 'var(--bd-ink)' : 'transparent',
+                      color: soloedModules.has(module) ? 'var(--bd-on-ink)' : 'var(--bd-ink)',
                       fontFamily: 'monospace',
                       fontWeight: 900,
                       fontSize: 9,
@@ -391,9 +391,9 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                     style={{
                       position: 'absolute',
                       left: `${secToPercent(timelineSec)}%`,
-                      top: 0, bottom: 0, width: 2,
-                      background: '#e8212b',
-                      pointerEvents: 'none',
+                        top: 0, bottom: 0, width: 2,
+                        background: 'var(--bd-red)',
+                        pointerEvents: 'none',
                       zIndex: 10,
                     }}
                   />
@@ -408,7 +408,7 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                         width: `${secToPercent(ghost.durSec)}%`,
                         top: 4, bottom: 4,
                         background: 'transparent',
-                        border: '2px dashed #000',
+                        border: '2px dashed var(--bd-ink)',
                         opacity: 0.5,
                         display: 'flex',
                         alignItems: 'center',
@@ -439,8 +439,10 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
                           width: `${width}%`,
                           top: 4, bottom: 4,
                           background: color,
+                          // Block bg is a fixed module accent — label text stays literal black in both themes
+                          color: '#000',
                           opacity: isDimmed ? 0.4 : 1,
-                          border: '2px solid #000',
+                          border: '2px solid var(--bd-ink)',
                           cursor: 'grab',
                           display: 'flex',
                           alignItems: 'center',
@@ -465,7 +467,7 @@ export default function ArrangementTimeline({ timelineSec, arrIsPlaying, arrLoop
           })}
 
           {/* Footer */}
-          <div style={{ borderTop: '2px solid #000', padding: '4px 12px', fontFamily: 'monospace', fontSize: 9, color: '#666', letterSpacing: 1, flexShrink: 0 }}>
+          <div style={{ borderTop: '2px solid var(--bd-ink)', padding: '4px 12px', fontFamily: 'monospace', fontSize: 9, color: 'var(--bd-muted)', letterSpacing: 1, flexShrink: 0 }}>
             <span className="arr-footer-full">CLICK TO PLACE · DRAG TO MOVE · RIGHT-CLICK TO REMOVE · MAX 60s</span>
             <span className="arr-footer-short">TAP · DRAG · HOLD TO REMOVE · 60s</span>
           </div>

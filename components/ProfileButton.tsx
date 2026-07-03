@@ -24,6 +24,11 @@ function getInitials(user: User): string {
 
 export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlocked = false, votesCast = null, votesRequired = 3 }: Props) {
   const [open, setOpen] = useState(false);
+  // Initial value must match what the inline script in layout.tsx already set on <html>
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light';
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  });
   const [confirmNew, setConfirmNew] = useState(false);
   const [confirmOut, setConfirmOut] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
@@ -143,6 +148,13 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
     setOpen(false);
   };
 
+  const toggleTheme = () => {
+    const next = theme === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch {}
+  };
+
   const openRound = rounds.find((r) => r.status === 'open');
 
   if (!user) {
@@ -151,7 +163,7 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
         onClick={signIn}
         disabled={signingIn}
         style={{
-          padding: '0 16px', background: 'transparent', color: '#000',
+          padding: '0 16px', background: 'transparent', color: 'var(--bd-ink)',
           fontFamily: 'monospace', fontWeight: 700, fontSize: 9, letterSpacing: 2,
           cursor: 'pointer', border: 'none',
           flexShrink: 0, opacity: signingIn ? 0.5 : 1, height: '100%',
@@ -169,9 +181,9 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
         style={{ padding: '0 14px', height: '100%', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
       >
         <div style={{
-          width: 28, height: 28, borderRadius: '50%', flexShrink: 0, border: '2px solid #000',
+          width: 28, height: 28, borderRadius: '50%', flexShrink: 0, border: '2px solid var(--bd-ink)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: '#000', color: '#f9f9f7', fontFamily: 'monospace', fontWeight: 900, fontSize: 10,
+          background: 'var(--bd-ink)', color: 'var(--bd-on-ink)', fontFamily: 'monospace', fontWeight: 900, fontSize: 10,
         }}>
           {getInitials(user)}
         </div>
@@ -180,10 +192,10 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
       {open && (
         <div style={{
           position: 'absolute', top: '100%', right: 0, marginTop: 4,
-          background: '#f9f9f7', border: '3px solid #000', minWidth: 220, zIndex: 100,
+          background: 'var(--bd-bg)', border: '3px solid var(--bd-ink)', minWidth: 220, zIndex: 100,
           display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ padding: '10px 14px', borderBottom: '2px solid #000', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1, color: '#666' }}>
+          <div style={{ padding: '10px 14px', borderBottom: '2px solid var(--bd-ink)', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1, color: 'var(--bd-muted)' }}>
             {user.user_metadata?.full_name ?? user.email ?? 'SIGNED IN'}
           </div>
 
@@ -193,10 +205,10 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
               onClick={gateBlocked ? undefined : () => { onSubmit(); setOpen(false); }}
               style={{
                 padding: '10px 14px',
-                background: gateBlocked ? 'transparent' : '#e8212b',
-                color: gateBlocked ? '#999' : '#fff',
+                background: gateBlocked ? 'transparent' : 'var(--bd-red)',
+                color: gateBlocked ? 'var(--bd-faint)' : '#fff',
                 border: 'none',
-                borderBottom: '2px solid #000',
+                borderBottom: '2px solid var(--bd-ink)',
                 fontFamily: 'monospace',
                 fontWeight: 900,
                 fontSize: 10,
@@ -211,7 +223,7 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
             >
               <span>⬆ SUBMIT TRACK</span>
               {gateBlocked && (
-                <span style={{ fontSize: 8, letterSpacing: 1, color: '#999' }}>
+                <span style={{ fontSize: 8, letterSpacing: 1, color: 'var(--bd-faint)' }}>
                   VOTE {votesCast}/{votesRequired} FIRST TO UNLOCK
                 </span>
               )}
@@ -221,12 +233,13 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
           <MenuBtn onClick={saveSession}>↓ SAVE SESSION</MenuBtn>
           <MenuBtn onClick={loadSession}>↑ LOAD SESSION</MenuBtn>
           <MenuBtn onClick={loadDemo}>♫ LOAD DEMO TRACK</MenuBtn>
+          <MenuBtn onClick={toggleTheme}>{theme === 'light' ? '◐ DARK MODE' : '◑ LIGHT MODE'}</MenuBtn>
 
-          <div style={{ borderTop: '2px solid #000' }} />
+          <div style={{ borderTop: '2px solid var(--bd-ink)' }} />
 
           {confirmNew ? (
-            <div style={{ padding: '8px 14px', borderBottom: '2px solid #000' }}>
-              <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 1, marginBottom: 8, color: '#e8212b' }}>Clear all work?</div>
+            <div style={{ padding: '8px 14px', borderBottom: '2px solid var(--bd-ink)' }}>
+              <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 1, marginBottom: 8, color: 'var(--bd-red)' }}>Clear all work?</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <ConfirmBtn danger onClick={() => { clearSession(); setOpen(false); setConfirmNew(false); }}>YES, CLEAR</ConfirmBtn>
                 <ConfirmBtn onClick={() => setConfirmNew(false)}>CANCEL</ConfirmBtn>
@@ -236,7 +249,7 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
             <MenuBtn onClick={() => setConfirmNew(true)}>⊘ NEW SESSION</MenuBtn>
           )}
 
-          <div style={{ borderTop: '2px solid #000' }} />
+          <div style={{ borderTop: '2px solid var(--bd-ink)' }} />
 
           {/* Admin section */}
           {isAdmin && (
@@ -246,13 +259,13 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
               </MenuBtn>
 
               {adminOpen && (
-                <div style={{ borderTop: '2px solid #000', borderBottom: '2px solid #000', background: 'rgba(0,0,0,0.04)', padding: '12px 14px' }}>
-                  {adminLoading && <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#666', marginBottom: 8 }}>Loading…</div>}
+                <div style={{ borderTop: '2px solid var(--bd-ink)', borderBottom: '2px solid var(--bd-ink)', background: 'var(--bd-ink-wash)', padding: '12px 14px' }}>
+                  {adminLoading && <div style={{ fontFamily: 'monospace', fontSize: 9, color: 'var(--bd-muted)', marginBottom: 8 }}>Loading…</div>}
 
                   <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: 2, fontWeight: 700, marginBottom: 6 }}>ROUND</div>
                   {openRound ? (
                     <div style={{ marginBottom: 8 }}>
-                      <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#666', marginBottom: 6 }}>
+                      <div style={{ fontFamily: 'monospace', fontSize: 9, color: 'var(--bd-muted)', marginBottom: 6 }}>
                         Open · {new Date(openRound.started_at).toLocaleDateString()}
                       </div>
                       <ConfirmBtn danger onClick={() => adminAction({ action: 'close_round', roundId: openRound.id })}>
@@ -261,7 +274,7 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
                     </div>
                   ) : (
                     <div style={{ marginBottom: 8 }}>
-                      <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#999', marginBottom: 6 }}>No open round</div>
+                      <div style={{ fontFamily: 'monospace', fontSize: 9, color: 'var(--bd-faint)', marginBottom: 6 }}>No open round</div>
                       <ConfirmBtn onClick={() => adminAction({ action: 'open_round' })}>OPEN NEW ROUND</ConfirmBtn>
                     </div>
                   )}
@@ -271,16 +284,16 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
                       <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: 2, fontWeight: 700, marginTop: 10, marginBottom: 6 }}>ADMINS</div>
                       {profiles.map((p) => (
                         <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                          <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#000' }}>{p.username ?? 'anon'}</span>
+                          <span style={{ fontFamily: 'monospace', fontSize: 9, color: 'var(--bd-ink)' }}>{p.username ?? 'anon'}</span>
                           <button
                             onClick={() => adminAction({ action: 'toggle_admin', userId: p.id, isAdmin: !p.is_admin })}
                             disabled={p.id === user?.id}
                             style={{
                               fontFamily: 'monospace', fontSize: 8, fontWeight: 700, letterSpacing: 1,
                               padding: '2px 8px', cursor: p.id === user?.id ? 'default' : 'pointer',
-                              border: '2px solid #000',
-                              background: p.is_admin ? '#000' : 'transparent',
-                              color: p.is_admin ? '#f9f9f7' : '#000',
+                              border: '2px solid var(--bd-ink)',
+                              background: p.is_admin ? 'var(--bd-ink)' : 'transparent',
+                              color: p.is_admin ? 'var(--bd-on-ink)' : 'var(--bd-ink)',
                               opacity: p.id === user?.id ? 0.4 : 1,
                             }}
                           >
@@ -291,7 +304,7 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
                     </>
                   )}
 
-                  {adminMsg && <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#e8212b', marginTop: 8 }}>{adminMsg}</div>}
+                  {adminMsg && <div style={{ fontFamily: 'monospace', fontSize: 9, color: 'var(--bd-red)', marginTop: 8 }}>{adminMsg}</div>}
                 </div>
               )}
             </>
@@ -299,7 +312,7 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
 
           {confirmOut ? (
             <div style={{ padding: '8px 14px' }}>
-              <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 1, marginBottom: 8, color: '#e8212b' }}>Sign out?</div>
+              <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 1, marginBottom: 8, color: 'var(--bd-red)' }}>Sign out?</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <ConfirmBtn danger onClick={signOut}>YES, SIGN OUT</ConfirmBtn>
                 <ConfirmBtn onClick={() => setConfirmOut(false)}>CANCEL</ConfirmBtn>
@@ -322,10 +335,10 @@ function MenuBtn({ onClick, children }: { onClick: () => void; children: React.R
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        padding: '10px 14px', background: hover ? 'rgba(0,0,0,0.07)' : 'transparent',
-        border: 'none', borderBottom: '2px solid #000',
+        padding: '10px 14px', background: hover ? 'var(--bd-ink-wash)' : 'transparent',
+        border: 'none', borderBottom: '2px solid var(--bd-ink)',
         fontFamily: 'monospace', fontWeight: 700, fontSize: 10, letterSpacing: 2,
-        cursor: 'pointer', textAlign: 'left', color: '#000', width: '100%',
+        cursor: 'pointer', textAlign: 'left', color: 'var(--bd-ink)', width: '100%',
       }}
     >
       {children}
@@ -339,9 +352,9 @@ function ConfirmBtn({ onClick, children, danger }: { onClick: () => void; childr
       onClick={onClick}
       style={{
         padding: '4px 10px',
-        background: danger ? '#e8212b' : 'transparent',
-        color: danger ? '#fff' : '#000',
-        border: '2px solid #000',
+        background: danger ? 'var(--bd-red)' : 'transparent',
+        color: danger ? '#fff' : 'var(--bd-ink)',
+        border: '2px solid var(--bd-ink)',
         fontFamily: 'monospace', fontWeight: 700, fontSize: 9, letterSpacing: 1,
         cursor: 'pointer',
       }}

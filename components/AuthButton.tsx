@@ -38,15 +38,15 @@ export default function AuthButton({ user }: Props) {
       style={{
         height: '100%',
         padding: '0 14px',
-        background: user ? '#000' : 'transparent',
-        color: user ? '#f9f9f7' : '#000',
+        background: user ? 'var(--bd-ink)' : 'transparent',
+        color: user ? 'var(--bd-on-ink)' : 'var(--bd-ink)',
         fontFamily: 'monospace',
         fontWeight: 700,
         fontSize: 9,
         letterSpacing: 2,
         cursor: 'pointer',
         border: 'none',
-        borderLeft: '3px solid #000',
+        borderLeft: '3px solid var(--bd-ink)',
         flexShrink: 0,
         opacity: loading ? 0.5 : 1,
       }}

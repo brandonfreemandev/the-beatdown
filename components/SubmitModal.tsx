@@ -58,11 +58,11 @@ export default function SubmitModal({ user, onClose }: Props) {
     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
   };
   const boxStyle: React.CSSProperties = {
-    background: '#f9f9f7', border: '3px solid #000',
+    background: 'var(--bd-bg)', border: '3px solid var(--bd-ink)', color: 'var(--bd-ink)',
     padding: 0, minWidth: 360, fontFamily: 'monospace',
   };
   const headerStyle: React.CSSProperties = {
-    background: '#000', color: '#f9f9f7',
+    background: 'var(--bd-ink)', color: 'var(--bd-on-ink)',
     padding: '10px 16px', fontWeight: 900, fontSize: 11, letterSpacing: 3,
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
   };
@@ -73,7 +73,7 @@ export default function SubmitModal({ user, onClose }: Props) {
       <div style={boxStyle} onClick={(e) => e.stopPropagation()}>
         <div style={headerStyle}>
           <span>SUBMIT TO ARENA</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#f9f9f7', cursor: 'pointer', fontSize: 14 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--bd-on-ink)', cursor: 'pointer', fontSize: 14 }}>✕</button>
         </div>
         <div style={bodyStyle}>
           {!user && (
@@ -90,7 +90,7 @@ export default function SubmitModal({ user, onClose }: Props) {
           {user && status === 'gate' && gateInfo && (
             <>
               <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>GATEKEEPER</p>
-              <p style={{ fontSize: 12, lineHeight: 1.7, marginBottom: 16, color: '#333' }}>
+              <p style={{ fontSize: 12, lineHeight: 1.7, marginBottom: 16, color: 'var(--bd-body)' }}>
                 You need to vote on <strong>{gateInfo.required - gateInfo.cast}</strong> more track{gateInfo.required - gateInfo.cast !== 1 ? 's' : ''} before you can submit.
                 <br />
                 Head to the Arena and cast your votes first.
@@ -104,7 +104,7 @@ export default function SubmitModal({ user, onClose }: Props) {
 
           {user && status === 'idle' && (
             <>
-              <p style={{ fontSize: 11, letterSpacing: 1, marginBottom: 12, color: '#666' }}>TRACK TITLE</p>
+              <p style={{ fontSize: 11, letterSpacing: 1, marginBottom: 12, color: 'var(--bd-muted)' }}>TRACK TITLE</p>
               <input
                 autoFocus
                 value={title}
@@ -113,7 +113,7 @@ export default function SubmitModal({ user, onClose }: Props) {
                 maxLength={60}
                 style={{
                   width: '100%', padding: '10px 12px',
-                  border: '2px solid #000', background: '#fff',
+                  border: '2px solid var(--bd-ink)', background: 'var(--bd-field)', color: 'var(--bd-ink)',
                   fontFamily: 'monospace', fontSize: 13, marginBottom: 20,
                 }}
                 placeholder="Give your track a name..."
@@ -140,7 +140,7 @@ export default function SubmitModal({ user, onClose }: Props) {
 
           {user && status === 'error' && (
             <>
-              <p style={{ fontSize: 12, color: '#e8212b', marginBottom: 16 }}>{errorMsg}</p>
+              <p style={{ fontSize: 12, color: 'var(--bd-red)', marginBottom: 16 }}>{errorMsg}</p>
               <button onClick={() => setStatus('idle')} style={secondaryBtn}>TRY AGAIN</button>
             </>
           )}
@@ -151,11 +151,11 @@ export default function SubmitModal({ user, onClose }: Props) {
 }
 
 const primaryBtn: React.CSSProperties = {
-  background: '#000', color: '#f9f9f7', border: 'none',
+  background: 'var(--bd-ink)', color: 'var(--bd-on-ink)', border: 'none',
   fontFamily: 'monospace', fontWeight: 700, fontSize: 11, letterSpacing: 2,
   padding: '10px 20px', cursor: 'pointer', width: '100%',
 };
 const secondaryBtn: React.CSSProperties = {
-  ...primaryBtn, background: 'transparent', color: '#000',
-  border: '2px solid #000', flex: 1,
+  ...primaryBtn, background: 'transparent', color: 'var(--bd-ink)',
+  border: '2px solid var(--bd-ink)', flex: 1,
 };

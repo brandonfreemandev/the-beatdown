@@ -60,7 +60,7 @@ export default function RotaryKnob({ label, value, onChange, color = '#000', def
         style={{ cursor: 'ns-resize' }}
       >
         {/* Track */}
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#ccc" strokeWidth={3} />
+        <circle cx={cx} cy={cy} r={r} fill="none" strokeWidth={3} style={{ stroke: 'var(--bd-hairline)' }} />
         {/* Arc */}
         <path
           d={`M ${startArc.x} ${startArc.y} A ${r} ${r} 0 ${largeArc} 1 ${endArc.x} ${endArc.y}`}
@@ -72,9 +72,9 @@ export default function RotaryKnob({ label, value, onChange, color = '#000', def
         {/* Tick */}
         <circle cx={tickX} cy={tickY} r={2.5} fill={color} />
         {/* Center */}
-        <circle cx={cx} cy={cy} r={6} fill="#f9f9f7" stroke="#000" strokeWidth={2} />
+        <circle cx={cx} cy={cy} r={6} strokeWidth={2} style={{ fill: 'var(--bd-bg)', stroke: 'var(--bd-ink)' }} />
       </svg>
-      <span style={{ fontSize: 9, fontFamily: 'monospace', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: '#000' }}>
+      <span style={{ fontSize: 9, fontFamily: 'monospace', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--bd-ink)' }}>
         {label}
       </span>
     </div>

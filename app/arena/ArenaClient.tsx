@@ -74,36 +74,36 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
     userVotes.includes(matchId) || voted[matchId];
 
   return (
-    <div style={{ fontFamily: 'monospace', background: '#f9f9f7', minHeight: '100vh', color: '#000' }}>
+    <div style={{ fontFamily: 'monospace', background: 'var(--bd-bg)', minHeight: '100vh', color: 'var(--bd-ink)' }}>
       <SiteNav currentPage="arena" user={user} isAdmin={profile?.is_admin ?? false} votesCast={profile?.votes_cast ?? null} />
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px' }}>
 
         {/* How it works */}
-        <div style={{ border: '3px solid #000', marginBottom: 32 }}>
+        <div style={{ border: '3px solid var(--bd-ink)', marginBottom: 32 }}>
           <button
             onClick={() => setHowOpen((o) => !o)}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              background: '#000', color: '#f9f9f7', border: 'none', padding: '10px 16px',
+              background: 'var(--bd-ink)', color: 'var(--bd-on-ink)', border: 'none', padding: '10px 16px',
               cursor: 'pointer', fontFamily: 'monospace',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontWeight: 700, fontSize: 9, letterSpacing: 3 }}>HOW IT WORKS</span>
-              <span style={{ fontSize: 8, fontWeight: 900, letterSpacing: 1, background: '#e8212b', color: '#fff', padding: '2px 6px' }}>NEW HERE?</span>
+              <span style={{ fontSize: 8, fontWeight: 900, letterSpacing: 1, background: 'var(--bd-red)', color: '#fff', padding: '2px 6px' }}>NEW HERE?</span>
             </div>
-            <span style={{ fontSize: 10, color: '#666' }}>{howOpen ? '▲ HIDE' : '▼ SHOW'}</span>
+            <span style={{ fontSize: 10, color: 'var(--bd-on-ink-muted)' }}>{howOpen ? '▲ HIDE' : '▼ SHOW'}</span>
           </button>
           {howOpen && (
             <div style={{ display: 'flex' }}>
               {HOW_IT_WORKS.map(({ step, desc }, i) => (
                 <div key={step} style={{
                   flex: 1, padding: '14px 16px',
-                  borderRight: i < 3 ? '3px solid #000' : 'none',
+                  borderRight: i < 3 ? '3px solid var(--bd-ink)' : 'none',
                 }}>
                   <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: 2, fontWeight: 700, marginBottom: 6 }}>{step}</div>
-                  <div style={{ fontFamily: 'monospace', fontSize: 10, lineHeight: 1.6, color: '#444' }}>{desc}</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 10, lineHeight: 1.6, color: 'var(--bd-body)' }}>{desc}</div>
                 </div>
               ))}
             </div>
@@ -112,7 +112,7 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
 
         {/* Stats bar */}
         {user && profile && (
-          <div style={{ display: 'flex', border: '3px solid #000', marginBottom: 32 }}>
+          <div style={{ display: 'flex', border: '3px solid var(--bd-ink)', marginBottom: 32 }}>
             {[
               { label: 'ELO', value: profile.elo_rating },
               { label: 'VOTES CAST', value: profile.votes_cast },
@@ -120,10 +120,10 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
             ].map(({ label, value }, i) => (
               <div key={label} style={{
                 flex: 1, padding: '14px 20px',
-                borderRight: i < 2 ? '3px solid #000' : 'none',
+                borderRight: i < 2 ? '3px solid var(--bd-ink)' : 'none',
                 display: 'flex', flexDirection: 'column', gap: 4,
               }}>
-                <div style={{ fontSize: 8, letterSpacing: 2, color: '#666', fontWeight: 700 }}>{label}</div>
+                <div style={{ fontSize: 8, letterSpacing: 2, color: 'var(--bd-muted)', fontWeight: 700 }}>{label}</div>
                 <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1 }}>{value}</div>
               </div>
             ))}
@@ -131,7 +131,7 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
         )}
 
         {!user && (
-          <div style={{ border: '3px solid #000', padding: '16px 20px', marginBottom: 32, fontSize: 11, letterSpacing: 1 }}>
+          <div style={{ border: '3px solid var(--bd-ink)', padding: '16px 20px', marginBottom: 32, fontSize: 11, letterSpacing: 1 }}>
             Sign in to cast votes and submit tracks to the Arena.
           </div>
         )}
@@ -143,7 +143,7 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
               onClick={runMatchmaker}
               disabled={matchmaking}
               style={{
-                background: '#000', color: '#f9f9f7', border: 'none',
+                background: 'var(--bd-ink)', color: 'var(--bd-on-ink)', border: 'none',
                 fontFamily: 'monospace', fontWeight: 700, fontSize: 10, letterSpacing: 2,
                 padding: '12px 22px', cursor: matchmaking ? 'wait' : 'pointer',
                 opacity: matchmaking ? 0.6 : 1,
@@ -152,22 +152,22 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
               {matchmaking ? 'MATCHING…' : '⚡ RUN MATCHMAKER'}
             </button>
             {matchmakeResult && (
-              <span style={{ fontSize: 10, letterSpacing: 1, color: '#666' }}>{matchmakeResult}</span>
+              <span style={{ fontSize: 10, letterSpacing: 1, color: 'var(--bd-muted)' }}>{matchmakeResult}</span>
             )}
           </div>
         )}
 
         {error && (
-          <div style={{ background: '#e8212b', color: '#fff', padding: '10px 16px', marginBottom: 24, fontSize: 11 }}>
+          <div style={{ background: 'var(--bd-red)', color: '#fff', padding: '10px 16px', marginBottom: 24, fontSize: 11 }}>
             {error}
           </div>
         )}
 
         {/* Empty state */}
         {matches.length === 0 && (
-          <div style={{ border: '3px solid #000', padding: '64px 32px', textAlign: 'center' }}>
+          <div style={{ border: '3px solid var(--bd-ink)', padding: '64px 32px', textAlign: 'center' }}>
             <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: 4, marginBottom: 16 }}>NO ACTIVE MATCHES</div>
-            <div style={{ fontSize: 11, color: '#666', letterSpacing: 1, lineHeight: 1.8 }}>
+            <div style={{ fontSize: 11, color: 'var(--bd-muted)', letterSpacing: 1, lineHeight: 1.8 }}>
               Submit a track from the Studio, then run the Matchmaker<br />
               to be paired with another producer.
             </div>
@@ -187,15 +187,15 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
           const winnerIsB = match.winner_id === match.track_b.id;
 
           return (
-            <div key={match.id} style={{ marginBottom: 48, border: '3px solid #000' }}>
+            <div key={match.id} style={{ marginBottom: 48, border: '3px solid var(--bd-ink)' }}>
               {/* Match header */}
               <div style={{
-                background: isResolved ? '#444' : '#000', color: '#f9f9f7',
+                background: isResolved ? 'var(--bd-ink-soft)' : 'var(--bd-ink)', color: 'var(--bd-on-ink)',
                 padding: '10px 16px', fontWeight: 700, fontSize: 9, letterSpacing: 3,
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               }}>
                 <span>{isResolved ? '✓ RESOLVED' : 'BATTLE'}</span>
-                <span style={{ color: '#aaa' }}>{total} VOTE{total !== 1 ? 'S' : ''}</span>
+                <span style={{ color: 'var(--bd-on-ink-muted)' }}>{total} VOTE{total !== 1 ? 'S' : ''}</span>
               </div>
 
               {/* Tracks */}
@@ -206,7 +206,7 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
                   label="TRACK A"
                   title={match.track_a.title}
                 />
-                <div style={{ width: 3, background: '#000', flexShrink: 0 }} />
+                <div style={{ width: 3, background: 'var(--bd-ink)', flexShrink: 0 }} />
                 <ArenaPlayer
                   arrangement={match.track_b.arrangement}
                   color={TRACK_COLORS.b}
@@ -217,14 +217,14 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
 
               {/* Vote bar */}
               {hasVoted && total > 0 && (
-                <div style={{ height: 6, display: 'flex', borderTop: '2px solid #000' }}>
+                <div style={{ height: 6, display: 'flex', borderTop: '2px solid var(--bd-ink)' }}>
                   <div style={{ width: `${pctA}%`, background: TRACK_COLORS.a, transition: 'width 0.4s' }} />
                   <div style={{ flex: 1, background: TRACK_COLORS.b }} />
                 </div>
               )}
 
               {/* Vote buttons */}
-              <div style={{ borderTop: hasVoted && total > 0 ? 'none' : '3px solid #000', display: 'flex' }}>
+              <div style={{ borderTop: hasVoted && total > 0 ? 'none' : '3px solid var(--bd-ink)', display: 'flex' }}>
                 <VoteBtn
                   onClick={() => castVote(match.id, match.track_a.id)}
                   disabled={!!hasVoted || !user || isLoading || isResolved}
@@ -235,7 +235,7 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
                     ? `${winnerIsA ? '▲ WINNER · ' : ''}${match.votes_a} vote${match.votes_a !== 1 ? 's' : ''} · ${pctA}%`
                     : `VOTE FOR ${match.track_a.title.toUpperCase()}`}
                 />
-                <div style={{ width: 3, background: '#000', flexShrink: 0 }} />
+                <div style={{ width: 3, background: 'var(--bd-ink)', flexShrink: 0 }} />
                 <VoteBtn
                   onClick={() => castVote(match.id, match.track_b.id)}
                   disabled={!!hasVoted || !user || isLoading || isResolved}
@@ -268,7 +268,8 @@ function VoteBtn({ onClick, disabled, active, color, label, winner }: {
         border: 'none',
         fontFamily: 'monospace', fontWeight: 700, fontSize: 10, letterSpacing: 1,
         cursor: disabled ? 'default' : 'pointer',
-        color: '#000',
+        // On a fixed track-color background, text stays literal black; on the page bg it follows the theme
+        color: winner || active ? '#000' : 'var(--bd-ink)',
         transition: 'background 0.15s',
         textAlign: 'center',
       }}

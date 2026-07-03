@@ -16,7 +16,7 @@ const BTN: React.CSSProperties = {
   letterSpacing: 1,
   cursor: 'pointer',
   padding: '2px 5px',
-  color: '#000',
+  color: 'var(--bd-ink)',
   flexShrink: 0,
 };
 
@@ -56,10 +56,10 @@ export default function VaultPanel({ module }: Props) {
       className="vault-panel"
       style={{
         width: 230,
-        borderLeft: '3px solid #000',
+        borderLeft: '3px solid var(--bd-ink)',
         display: 'flex',
         flexDirection: 'column',
-        background: '#f9f9f7',
+        background: 'var(--bd-bg)',
         flexShrink: 0,
       }}
     >
@@ -74,8 +74,8 @@ export default function VaultPanel({ module }: Props) {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                background: isActive ? 'rgba(0,0,0,0.07)' : '#f9f9f7',
-                borderBottom: isActive ? '3px solid #000' : '2px solid #000',
+                background: isActive ? 'var(--bd-ink-wash)' : 'var(--bd-bg)',
+                borderBottom: isActive ? '3px solid var(--bd-ink)' : '2px solid var(--bd-ink)',
                 minHeight: 36,
                 position: 'relative',
               }}
@@ -102,15 +102,15 @@ export default function VaultPanel({ module }: Props) {
                   letterSpacing: 1,
                   cursor: 'pointer',
                   textAlign: 'left',
-                  color: '#000',
+                  color: 'var(--bd-ink)',
                   minWidth: 0,
                 }}
               >
                 <span
                   style={{
                     width: 7, height: 7,
-                    background: isActive ? '#000' : 'transparent',
-                    border: '2px solid #000',
+                    background: isActive ? 'var(--bd-ink)' : 'transparent',
+                    border: '2px solid var(--bd-ink)',
                     display: 'inline-block',
                     flexShrink: 0,
                   }}
@@ -134,10 +134,10 @@ export default function VaultPanel({ module }: Props) {
                       letterSpacing: 1,
                       background: 'transparent',
                       border: 'none',
-                      borderBottom: '2px solid #000',
+                      borderBottom: '2px solid var(--bd-ink)',
                       outline: 'none',
                       width: '100%',
-                      color: '#000',
+                      color: 'var(--bd-ink)',
                       padding: 0,
                     }}
                   />
@@ -149,7 +149,7 @@ export default function VaultPanel({ module }: Props) {
               </button>
 
               {/* Action buttons */}
-              <div style={{ display: 'flex', borderLeft: '2px solid #000' }}>
+              <div style={{ display: 'flex', borderLeft: '2px solid var(--bd-ink)' }}>
                 <button
                   onClick={() => duplicatePattern(module, p.id)}
                   title="Duplicate"
@@ -162,7 +162,7 @@ export default function VaultPanel({ module }: Props) {
                   onClick={() => deletePattern(module, p.id)}
                   title="Delete"
                   disabled={vault.patterns.length <= 1}
-                  style={{ ...BTN, opacity: vault.patterns.length <= 1 ? 0.3 : 1, borderLeft: '1px solid #00000033' }}
+                  style={{ ...BTN, opacity: vault.patterns.length <= 1 ? 0.3 : 1, borderLeft: '1px solid var(--bd-grid-line)' }}
                 >
                   ✕
                 </button>
@@ -177,14 +177,14 @@ export default function VaultPanel({ module }: Props) {
             style={{
               padding: '10px 12px',
               background: 'transparent',
-              color: '#666',
+              color: 'var(--bd-muted)',
               fontFamily: 'monospace',
               fontSize: 11,
               letterSpacing: 1,
               cursor: 'pointer',
               textAlign: 'left',
               border: 'none',
-              borderBottom: '2px solid #000',
+              borderBottom: '2px solid var(--bd-ink)',
               width: '100%',
             }}
           >
@@ -195,13 +195,13 @@ export default function VaultPanel({ module }: Props) {
         {Array.from({
           length: Math.max(0, 5 - vault.patterns.length - (vault.patterns.length < 5 ? 1 : 0)),
         }).map((_, i) => (
-          <div key={i} style={{ padding: '10px 12px', borderBottom: '2px solid #000', color: '#ccc', fontFamily: 'monospace', fontSize: 11 }}>
+          <div key={i} style={{ padding: '10px 12px', borderBottom: '2px solid var(--bd-ink)', color: 'var(--bd-hairline)', fontFamily: 'monospace', fontSize: 11 }}>
             — EMPTY —
           </div>
         ))}
       </div>
 
-      <div style={{ padding: '6px 12px', borderTop: '3px solid #000', fontFamily: 'monospace', fontSize: 9, color: '#666', letterSpacing: 1 }}>
+      <div style={{ padding: '6px 12px', borderTop: '3px solid var(--bd-ink)', fontFamily: 'monospace', fontSize: 9, color: 'var(--bd-muted)', letterSpacing: 1 }}>
         {isMobile ? (
           <div>{vault.patterns.length}/5 · DOUBLE-CLICK TO RENAME</div>
         ) : (
