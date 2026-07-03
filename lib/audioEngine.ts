@@ -1,5 +1,15 @@
 export type ModuleType = 'drum' | 'bass' | 'pad' | 'synth' | 'arp';
 
+// Per-row pitch table for each module's 8-row grid. Shared by every playback path
+// (live editing, arrangement playback, and read-only submission playback) so they can't drift.
+export const SCALE_FREQS: Record<ModuleType, number[]> = {
+  drum:  [80, 100, 120, 150, 180, 200, 240, 300],
+  bass:  [55, 73.4, 82.4, 110, 146.8, 164.8, 220, 293.7],
+  pad:   [261.6, 293.7, 329.6, 369.9, 415.3, 466.2, 523.2, 587.3],
+  synth: [220, 246.9, 261.6, 293.7, 329.6, 369.9, 415.3, 440],
+  arp:   [440, 493.9, 523.2, 587.3, 659.3, 739.9, 830.6, 880],
+};
+
 export interface Note {
   beat: number;
   noteFrequencyHz: number;
@@ -45,6 +55,7 @@ class AudioEngine {
   private currentBeat = 0;
   private bpm = 120;
   private isPlaying = false;
+  private initialized = false;
 
   private getCtx(): AudioContext {
     if (!this.ctx) {
@@ -53,7 +64,12 @@ class AudioEngine {
     return this.ctx;
   }
 
+  // Idempotent — safe to call from every entry point that might play audio (Studio, Leaderboard,
+  // Arena), not just Studio's mount effect. Re-running this used to recreate every gain/filter/panner
+  // node from scratch each call, silently orphaning the old ones — now it's a no-op after the first call.
   init() {
+    if (this.initialized) return;
+    this.initialized = true;
     const ctx = this.getCtx();
     const types: ModuleType[] = ['drum', 'bass', 'pad', 'synth', 'arp'];
     for (const type of types) {

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ArenaPlayer from '@/components/ArenaPlayer';
 import SiteNav from '@/components/SiteNav';
-import type { Profile } from '@/lib/supabase/types';
+import type { Profile, ArrangementData } from '@/lib/supabase/types';
 import type { User } from '@supabase/supabase-js';
 
 interface ArenaMatch {
@@ -12,8 +12,8 @@ interface ArenaMatch {
   votes_b: number;
   status: 'active' | 'resolved';
   winner_id: string | null;
-  track_a: { id: string; title: string; arrangement: any };
-  track_b: { id: string; title: string; arrangement: any };
+  track_a: { id: string; title: string; arrangement: ArrangementData };
+  track_b: { id: string; title: string; arrangement: ArrangementData };
 }
 
 interface Props {

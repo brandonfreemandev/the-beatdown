@@ -1,17 +1,8 @@
 'use client';
-import { useRef, useState, useCallback } from 'react';
-import { audioEngine } from '@/lib/audioEngine';
-import { MODULE_COLORS, MODULE_LABELS, MODULES, GRID_ROWS, GRID_STEPS } from '@/lib/store';
+import { MODULE_COLORS, MODULE_LABELS, MODULES, GRID_STEPS } from '@/lib/store';
+import { useTrackPlayback } from '@/lib/useTrackPlayback';
 import type { ModuleType } from '@/lib/audioEngine';
 import type { ArrangementData } from '@/lib/supabase/types';
-
-const SCALE_FREQS: Record<ModuleType, number[]> = {
-  drum:  [80, 100, 120, 150, 180, 200, 240, 300],
-  bass:  [55, 73.4, 82.4, 110, 146.8, 164.8, 220, 293.7],
-  pad:   [261.6, 293.7, 329.6, 369.9, 415.3, 466.2, 523.2, 587.3],
-  synth: [220, 246.9, 261.6, 293.7, 329.6, 369.9, 415.3, 440],
-  arp:   [440, 493.9, 523.2, 587.3, 659.3, 739.9, 830.6, 880],
-};
 
 interface Props {
   arrangement: ArrangementData;
@@ -21,38 +12,9 @@ interface Props {
 }
 
 export default function ArenaPlayer({ arrangement, color, label, title }: Props) {
-  const [playing, setPlaying] = useState(false);
-  const [step, setStep] = useState(-1);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const stepRef = useRef(0);
-
-  const stop = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setStep(-1);
-    setPlaying(false);
-  }, []);
-
-  const toggle = useCallback(() => {
-    if (playing) { stop(); return; }
-    audioEngine.resume();
-    stepRef.current = 0;
-    const msPerStep = (60 / (arrangement.bpm ?? 120) / 4) * 1000;
-    timerRef.current = setInterval(() => {
-      const s = stepRef.current % GRID_STEPS;
-      setStep(s);
-      for (const module of MODULES) {
-        const grid = arrangement.grids?.[module];
-        if (!grid) continue;
-        for (let row = 0; row < GRID_ROWS; row++) {
-          if (grid[row]?.[s]) {
-            audioEngine.preview(module as ModuleType, SCALE_FREQS[module as ModuleType][row], row);
-          }
-        }
-      }
-      stepRef.current += 1;
-    }, msPerStep);
-    setPlaying(true);
-  }, [playing, arrangement, stop]);
+  const { playing, currentSec, toggle } = useTrackPlayback(arrangement);
+  const secPerStep = 60 / (arrangement.bpm || 120) / 4;
+  const step = playing ? Math.floor(currentSec / secPerStep) % GRID_STEPS : -1;
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -79,25 +41,34 @@ export default function ArenaPlayer({ arrangement, color, label, title }: Props)
         </button>
       </div>
 
-      {/* Mini grid with module labels */}
+      {/* Mini grid — shows whichever pattern is actually active per module at the current time.
+          Older submissions (pre-dating the vaults field) have no blocks to resolve, so fall
+          back to their flat saved grid, matching how they always rendered before this fix. */}
       <div style={{ padding: '12px 14px 10px', flex: 1, background: '#f9f9f7' }}>
         {MODULES.map((mod) => {
-          const grid = arrangement.grids?.[mod];
           const modColor = MODULE_COLORS[mod as ModuleType];
-          const hasAny = grid?.some((row) => row.some(Boolean));
+          const hasRichData = !!arrangement.vaults && Object.keys(arrangement.vaults).length > 0;
+          const block = hasRichData
+            ? arrangement.timeline.find(
+                (b) => b.moduleType === mod && currentSec >= b.startSec && currentSec < b.startSec + b.durationSec
+              )
+            : undefined;
+          const pattern = block ? arrangement.vaults?.[mod]?.patterns.find((p) => p.id === block.patternId) : undefined;
+          const grid = hasRichData ? pattern?.grid : arrangement.grids?.[mod];
+          const isActiveNow = playing && (hasRichData ? !!block : true);
           return (
             <div key={mod} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, height: 12 }}>
               <div style={{
                 width: 36, flexShrink: 0,
                 fontFamily: 'monospace', fontSize: 7, fontWeight: 900, letterSpacing: 1,
-                color: hasAny ? '#000' : '#bbb',
+                color: isActiveNow ? '#000' : '#bbb',
               }}>
                 {MODULE_LABELS[mod as ModuleType]}
               </div>
               <div style={{ flex: 1, display: 'flex', gap: 1, height: '100%' }}>
                 {Array.from({ length: GRID_STEPS }, (_, ci) => {
                   const hasNote = grid?.some((row) => row[ci]);
-                  const isHead = ci === step;
+                  const isHead = ci === step && isActiveNow;
                   return (
                     <div
                       key={ci}

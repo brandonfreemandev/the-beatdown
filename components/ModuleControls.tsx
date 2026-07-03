@@ -2,6 +2,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { audioEngine } from '@/lib/audioEngine';
 import { MODULE_COLORS, useStore } from '@/lib/store';
+import { mapCutoff, mapDecay, mapAttack, mapRes, mapPan } from '@/lib/knobMapping';
 import RotaryKnob from './RotaryKnob';
 import type { ModuleType } from '@/lib/audioEngine';
 
@@ -15,14 +16,26 @@ interface Props {
 export default function ModuleControls({ module, playhead, isPlaying, onTogglePlay }: Props) {
   const color = MODULE_COLORS[module];
 
-  const [volume, setVolume] = useState(0.7);
-  const [cutoff, setCutoff] = useState(0.8);
-  const [decay, setDecay] = useState(0.3);
-  const [attack, setAttack] = useState(0.05);
   const moduleSettings = useStore((s) => s.moduleSettings[module]);
   const setModuleSettings = useStore((s) => s.setModuleSettings);
+  const volume = moduleSettings?.volume ?? 0.7;
+  const cutoff = moduleSettings?.cutoff ?? 0.8;
+  const decay = moduleSettings?.decay ?? 0.3;
+  const attack = moduleSettings?.attack ?? 0.05;
   const res = moduleSettings?.res ?? 0.05;
   const pan = moduleSettings?.pan ?? 0.5;
+
+  // Keep the audio engine's actual per-module nodes in sync with the stored (and possibly
+  // persisted/loaded-from-session) settings — engine state doesn't update itself just because
+  // the store changed, and its own init() defaults won't match a restored session otherwise.
+  useEffect(() => {
+    audioEngine.setVolume(module, volume);
+    audioEngine.setCutoff(module, mapCutoff(cutoff));
+    audioEngine.setDecay(module, mapDecay(decay));
+    audioEngine.setAttack(module, mapAttack(attack));
+    audioEngine.setRes(module, mapRes(res));
+    audioEngine.setPan(module, mapPan(pan));
+  }, [module, volume, cutoff, decay, attack, res, pan]);
 
   // Vault state — self-contained here
   const vault = useStore((s) => s.vaults[module]);
@@ -48,34 +61,30 @@ export default function ModuleControls({ module, playhead, isPlaying, onTogglePl
   // Close vault when module changes
   useEffect(() => { setVaultOpen(false); }, [module]);
 
+  // These only write to the store now — the sync effect above is the single place
+  // that applies values to the audio engine, so there's one source of truth for the mapping.
   const handleVolume = useCallback((v: number) => {
-    setVolume(v);
-    audioEngine.setVolume(module, v);
-  }, [module]);
+    setModuleSettings(module, { volume: v });
+  }, [module, setModuleSettings]);
 
   const handleCutoff = useCallback((v: number) => {
-    setCutoff(v);
-    audioEngine.setCutoff(module, 200 + v * v * 17800);
-  }, [module]);
+    setModuleSettings(module, { cutoff: v });
+  }, [module, setModuleSettings]);
 
   const handleDecay = useCallback((v: number) => {
-    setDecay(v);
-    audioEngine.setDecay(module, 0.05 + v * 2.0);
-  }, [module]);
+    setModuleSettings(module, { decay: v });
+  }, [module, setModuleSettings]);
 
   const handleAttack = useCallback((v: number) => {
-    setAttack(v);
-    audioEngine.setAttack(module, 0.001 + v * 0.3);
-  }, [module]);
+    setModuleSettings(module, { attack: v });
+  }, [module, setModuleSettings]);
 
   const handleRes = useCallback((v: number) => {
     setModuleSettings(module, { res: v });
-    audioEngine.setRes(module, v * 20);
   }, [module, setModuleSettings]);
 
   const handlePan = useCallback((v: number) => {
     setModuleSettings(module, { pan: v });
-    audioEngine.setPan(module, (v - 0.5) * 2);
   }, [module, setModuleSettings]);
 
   const bpm = useStore((s) => s.bpm);

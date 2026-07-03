@@ -1,16 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { audioEngine } from './audioEngine';
+import { audioEngine, SCALE_FREQS } from './audioEngine';
 import { useStore, MODULES, GRID_ROWS, GRID_STEPS } from './store';
-import type { ModuleType } from './audioEngine';
-
-const SCALE_FREQS: Record<ModuleType, number[]> = {
-  drum:  [80, 100, 120, 150, 180, 200, 240, 300],
-  bass:  [55, 73.4, 82.4, 110, 146.8, 164.8, 220, 293.7],
-  pad:   [261.6, 293.7, 329.6, 369.9, 415.3, 466.2, 523.2, 587.3],
-  synth: [220, 246.9, 261.6, 293.7, 329.6, 369.9, 415.3, 440],
-  arp:   [440, 493.9, 523.2, 587.3, 659.3, 739.9, 830.6, 880],
-};
 
 export function usePlayback() {
   const [isPlaying, setIsPlaying] = useState(false);

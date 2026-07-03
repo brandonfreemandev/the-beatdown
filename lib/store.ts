@@ -53,8 +53,12 @@ function emptyGrid(): Grid {
 }
 
 export interface ModuleSettings {
-  res: number; // 0–1
-  pan: number; // 0–1
+  volume: number; // 0–1
+  cutoff: number; // 0–1
+  decay: number;  // 0–1
+  attack: number; // 0–1
+  res: number;    // 0–1
+  pan: number;    // 0–1
 }
 
 interface AppState {
@@ -115,6 +119,10 @@ function seedPattern(module: ModuleType, index: number): Pattern {
   };
 }
 
+function defaultModuleSettings(): ModuleSettings {
+  return { volume: 0.7, cutoff: 0.8, decay: 0.3, attack: 0.05, res: 0.05, pan: 0.5 };
+}
+
 const initialVaults: Record<ModuleType, ModuleVault> = {} as Record<ModuleType, ModuleVault>;
 const initialGrids: Record<ModuleType, Grid> = {} as Record<ModuleType, Grid>;
 const initialModuleSettings: Record<ModuleType, ModuleSettings> = {} as Record<ModuleType, ModuleSettings>;
@@ -125,7 +133,7 @@ for (const m of MODULES) {
   vault.activePatternId = vault.patterns[0].id;
   initialVaults[m] = vault;
   initialGrids[m] = emptyGrid();
-  initialModuleSettings[m] = { res: 0.05, pan: 0.5 };
+  initialModuleSettings[m] = defaultModuleSettings();
 }
 
 const STORAGE_KEY = 'beatdown-session-v1';
@@ -367,14 +375,16 @@ export const useStore = create<AppState>()(
   clearSession: () => {
     const fresh: Record<ModuleType, ModuleVault> = {} as Record<ModuleType, ModuleVault>;
     const freshGrids: Record<ModuleType, Grid> = {} as Record<ModuleType, Grid>;
+    const freshModuleSettings: Record<ModuleType, ModuleSettings> = {} as Record<ModuleType, ModuleSettings>;
     for (const m of MODULES) {
       const vault = defaultVault();
       vault.patterns = [seedPattern(m, 0), seedPattern(m, 1)];
       vault.activePatternId = vault.patterns[0].id;
       fresh[m] = vault;
       freshGrids[m] = emptyGrid();
+      freshModuleSettings[m] = defaultModuleSettings();
     }
-    set({ vaults: fresh, grids: freshGrids, timeline: [], bpm: 120, activeModule: 'drum' });
+    set({ vaults: fresh, grids: freshGrids, moduleSettings: freshModuleSettings, timeline: [], bpm: 120, activeModule: 'drum' });
     useStore.temporal.getState().clear();
     localStorage.removeItem(STORAGE_KEY);
   },

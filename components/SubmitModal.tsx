@@ -30,7 +30,9 @@ export default function SubmitModal({ user, onClose }: Props) {
     const arrangement = {
       bpm: state.bpm,
       grids: state.grids,
+      vaults: state.vaults, // full pattern data — without this, blocks referencing a non-active pattern can't be reconstructed
       timeline: state.timeline,
+      moduleSettings: state.moduleSettings,
     };
 
     const res = await fetch('/api/submit', {

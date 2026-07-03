@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useStore } from '@/lib/store';
+import { DEMO_TRACK } from '@/lib/demoTrack';
 import type { User } from '@supabase/supabase-js';
 
 interface Props {
@@ -34,6 +35,7 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
   const dropdownRef = useRef<HTMLDivElement>(null);
   const clearSession = useStore((s) => s.clearSession);
   const supabase = createClient();
+
 
   useEffect(() => {
     if (!open) return;
@@ -85,7 +87,11 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
 
   const saveSession = () => {
     const s = useStore.getState();
-    const data = JSON.stringify({ grids: s.grids, vaults: s.vaults, timeline: s.timeline, bpm: s.bpm }, null, 2);
+    const data = JSON.stringify(
+      { grids: s.grids, vaults: s.vaults, timeline: s.timeline, bpm: s.bpm, moduleSettings: s.moduleSettings },
+      null,
+      2
+    );
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -94,6 +100,23 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
     a.click();
     URL.revokeObjectURL(url);
     setOpen(false);
+  };
+
+  // Shared by file-loaded sessions and the bundled demo track
+  const applySessionData = (data: any) => {
+    if (!data.grids || !data.vaults || data.timeline === undefined) {
+      alert('Invalid session file.');
+      return;
+    }
+    useStore.setState({
+      grids: data.grids,
+      vaults: data.vaults,
+      timeline: data.timeline,
+      bpm: data.bpm ?? 120,
+      // Older saved sessions predate per-module knob settings — keep current values rather than wiping them
+      moduleSettings: data.moduleSettings ?? useStore.getState().moduleSettings,
+    });
+    useStore.temporal.getState().clear();
   };
 
   const loadSession = () => {
@@ -106,16 +129,17 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
       const reader = new FileReader();
       reader.onload = (ev) => {
         try {
-          const data = JSON.parse(ev.target?.result as string);
-          if (data.grids && data.vaults && data.timeline !== undefined) {
-            useStore.setState({ grids: data.grids, vaults: data.vaults, timeline: data.timeline, bpm: data.bpm ?? 120 });
-            useStore.temporal.getState().clear();
-          } else { alert('Invalid session file.'); }
+          applySessionData(JSON.parse(ev.target?.result as string));
         } catch { alert('Could not read session file.'); }
       };
       reader.readAsText(file);
     };
     input.click();
+    setOpen(false);
+  };
+
+  const loadDemo = () => {
+    applySessionData(DEMO_TRACK);
     setOpen(false);
   };
 
@@ -196,6 +220,7 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
 
           <MenuBtn onClick={saveSession}>↓ SAVE SESSION</MenuBtn>
           <MenuBtn onClick={loadSession}>↑ LOAD SESSION</MenuBtn>
+          <MenuBtn onClick={loadDemo}>♫ LOAD DEMO TRACK</MenuBtn>
 
           <div style={{ borderTop: '2px solid #000' }} />
 

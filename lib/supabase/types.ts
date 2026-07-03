@@ -77,14 +77,16 @@ export type Submission = Database['public']['Tables']['submissions']['Row'];
 export type Match = Database['public']['Tables']['matches']['Row'];
 export type Vote = Database['public']['Tables']['votes']['Row'];
 
+// Type-only import — erased at compile time, so this doesn't pull the live Zustand store
+// (or its localStorage-touching persist middleware) into server-side code that reads this type.
+import type { ModuleVault, ModuleSettings, TimelineBlock } from '../store';
+
 export interface ArrangementData {
   bpm: number;
   grids: Record<string, boolean[][]>;
-  timeline: Array<{
-    id: string;
-    patternId: string;
-    moduleType: string;
-    startSec: number;
-    durationSec: number;
-  }>;
+  // Optional: real submissions made before this field existed lack it. Playback code must
+  // fall back to looping `grids` flat for those rather than assume this is always present.
+  vaults?: Record<string, ModuleVault>;
+  timeline: TimelineBlock[];
+  moduleSettings?: Record<string, ModuleSettings>;
 }
