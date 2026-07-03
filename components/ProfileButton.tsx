@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useStore } from '@/lib/store';
+import { useStore, MODULES } from '@/lib/store';
 import { DEMO_TRACK } from '@/lib/demoTrack';
 import type { User } from '@supabase/supabase-js';
 
@@ -113,8 +113,19 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
       alert('Invalid session file.');
       return;
     }
+    // Working grids must match each vault's activePatternId — loadPatternToGrid auto-saves
+    // the current grid into the active pattern before switching, so a mismatch here would
+    // copy the wrong pattern into the vault on the first dropdown click.
+    const grids = { ...data.grids };
+    for (const m of MODULES) {
+      const vault = data.vaults[m];
+      const active = vault?.patterns?.find((p: { id: string }) => p.id === vault.activePatternId);
+      if (active?.grid) {
+        grids[m] = active.grid.map((r: boolean[]) => [...r]);
+      }
+    }
     useStore.setState({
-      grids: data.grids,
+      grids,
       vaults: data.vaults,
       timeline: data.timeline,
       bpm: data.bpm ?? 120,

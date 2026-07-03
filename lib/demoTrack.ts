@@ -176,10 +176,12 @@ const DEMO_TIMELINE: TimelineBlock[] = [
   ...blocksFor('arp', 'cascade', [[40, 48]]),
 ];
 
+// Flat working-grid snapshot — must match each vault's activePatternId (first pattern
+// per module) so a loaded session doesn't corrupt vault data on the first pattern switch.
 const DEMO_GRIDS: Record<ModuleType, Grid> = {
-  drum: DRUM_CHORUS,
-  bass: BASS_WALK,
-  pad: PAD_D,
+  drum: DRUM_VERSE,
+  bass: BASS_ROOT,
+  pad: PAD_AM,
   synth: SYNTH_HOOK,
   arp: ARP_CLIMB,
 };
