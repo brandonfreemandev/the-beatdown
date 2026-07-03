@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { votesRequired } from '@/lib/gatekeeper';
 import ArenaClient from './ArenaClient';
 
 export const dynamic = 'force-dynamic';
@@ -7,16 +8,19 @@ export default async function ArenaPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: matches } = await supabase
-    .from('matches')
-    .select(`
+  const [{ data: matches }, { data: round }] = await Promise.all([
+    supabase
+      .from('matches')
+      .select(`
       id, votes_a, votes_b, status, winner_id,
       track_a:submissions!matches_track_a_id_fkey(id, title, arrangement),
       track_b:submissions!matches_track_b_id_fkey(id, title, arrangement)
     `)
-    .in('status', ['active', 'resolved'])
-    .order('created_at', { ascending: false })
-    .limit(10) as { data: any[] | null; error: unknown };
+      .in('status', ['active', 'resolved'])
+      .order('created_at', { ascending: false })
+      .limit(10) as { data: any[] | null; error: unknown },
+    supabase.from('rounds').select('entry_count').eq('status', 'open').order('started_at', { ascending: false }).limit(1).maybeSingle(),
+  ]);
 
   let userVotes: string[] = [];
   if (user) {
@@ -33,7 +37,7 @@ export default async function ArenaPage() {
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .single() as { data: any; error: unknown };
+      .maybeSingle() as { data: any; error: unknown };
     profile = data;
   }
 
@@ -43,6 +47,7 @@ export default async function ArenaPage() {
       profile={profile}
       matches={matches ?? []}
       userVotes={userVotes}
+      votesRequired={votesRequired(round?.entry_count ?? 4)}
     />
   );
 }

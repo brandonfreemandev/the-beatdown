@@ -64,7 +64,7 @@ export default function VaultPanel({ module }: Props) {
       }}
     >
       {/* Pattern slots */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+      <div className="bd-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         {vault.patterns.map((p) => {
           const isActive = p.id === vault.activePatternId;
           const isEditing = editingId === p.id;

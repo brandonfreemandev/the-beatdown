@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Match, Profile, Submission } from '@/lib/supabase/types';
 
 export async function POST() {
-  const service = await createServiceClient();
+  const service = createServiceClient();
 
   const { data: round } = await service
     .from('rounds')

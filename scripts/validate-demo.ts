@@ -1,5 +1,7 @@
 import { DEMO_TRACK } from '../lib/demoTrack';
 import { SONNET_TRACK } from '../lib/sonnetTrack';
+import { COMPOSER_TRACK } from '../lib/composerTrack';
+import { SPARK_TRACK } from '../lib/sparkTrack';
 import { MODULES, GRID_ROWS, GRID_STEPS } from '../lib/store';
 
 type Track = typeof DEMO_TRACK;
@@ -61,16 +63,20 @@ function validate(name: string, track: Track): string[] {
   return errors.map((e) => `[${name}] ${e}`);
 }
 
-const allErrors = [
-  ...validate('DEMO_TRACK', DEMO_TRACK),
-  ...validate('SONNET_TRACK', SONNET_TRACK),
-];
+const TRACKS = [
+  ['DEMO_TRACK', DEMO_TRACK],
+  ['SONNET_TRACK', SONNET_TRACK],
+  ['COMPOSER_TRACK', COMPOSER_TRACK],
+  ['SPARK_TRACK', SPARK_TRACK],
+] as const;
+
+const allErrors = TRACKS.flatMap(([name, track]) => validate(name, track));
 
 if (allErrors.length) {
   console.error('TRACK VALIDATION FAILED:\n' + allErrors.map((e) => '  - ' + e).join('\n'));
   process.exit(1);
 } else {
-  for (const [name, track] of [['DEMO_TRACK', DEMO_TRACK], ['SONNET_TRACK', SONNET_TRACK]] as const) {
+  for (const [name, track] of TRACKS) {
     console.log(`${name} validation passed:`, {
       modules: MODULES.length,
       timelineBlocks: track.timeline.length,

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { ensureProfile } from '@/lib/ensureProfile';
+import { votesRequired } from '@/lib/gatekeeper';
 import type { Round, Profile } from '@/lib/supabase/types';
 
 export async function POST(request: Request) {
@@ -11,20 +13,12 @@ export async function POST(request: Request) {
   const { title, arrangement } = body;
   if (!title?.trim()) return NextResponse.json({ error: 'Title required' }, { status: 400 });
 
-  const service = await createServiceClient();
+  const service = createServiceClient();
 
-  // Ensure profile row exists — trigger may not have fired on OAuth signup
-  const { data: existingProfile } = await (service.from('profiles') as any)
-    .select('id').eq('id', user.id).maybeSingle();
-  if (!existingProfile) {
-    const { error: profileErr } = await (service.from('profiles') as any).insert({
-      id: user.id,
-      username: user.user_metadata?.full_name ?? user.email ?? 'Anonymous',
-    });
-    if (profileErr) {
-      console.error('Profile creation failed:', profileErr);
-      return NextResponse.json({ error: 'Could not create user profile' }, { status: 500 });
-    }
+  const { error: profileErr } = await ensureProfile(service, user);
+  if (profileErr) {
+    console.error('Profile creation failed:', profileErr);
+    return NextResponse.json({ error: 'Could not create user profile' }, { status: 500 });
   }
 
   const { data: round } = await service
@@ -43,7 +37,7 @@ export async function POST(request: Request) {
     .eq('id', user.id)
     .single() as { data: Pick<Profile, 'votes_cast'> | null; error: unknown };
 
-  const required = Math.ceil(round.entry_count / 2);
+  const required = votesRequired(round.entry_count);
   if (round.entry_count > 0 && (profile?.votes_cast ?? 0) < required) {
     return NextResponse.json(
       { error: 'GATEKEEPER', required, cast: profile?.votes_cast ?? 0 },

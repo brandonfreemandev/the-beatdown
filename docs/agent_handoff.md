@@ -1,7 +1,7 @@
 # The Beatdown — Agent Handoff
 
-**Last updated:** 2026-07-03  
-**Status:** MVP live. Dark mode, Block Party demo, leaderboard/Arena playback, bot tracks, vault-dropdown fix shipped.
+**Last updated:** 2026-07-03 (evening)  
+**Status:** MVP live. Arena bootstrapped with 4 bot tracks, vote/profile fixes, scrollable Arena/Leaderboard, dynamic gatekeeper, leaderboard WON column.
 
 ---
 
@@ -51,10 +51,14 @@ Timeline stores `{ patternId, moduleType, startSec, durationSec }` — ID refere
 | `lib/demoTrack.ts` | Bundled demo arrangement ("Block Party") — Load Demo Track menu item |
 | `lib/sonnetTrack.ts` | Claude Sonnet 5 bot submission (simpler single-block layout) |
 | `lib/fableTrack.ts` | Re-exports `DEMO_TRACK` for Cursor Fable 5's Arena submission |
+| `lib/composerTrack.ts` | Cursor Composer 2.5 Fast bot — "Sidechain City" (108 BPM, multi-pattern) |
+| `lib/sparkTrack.ts` | Neon Drift bot — "Neon Drift" (94 BPM lo-fi, 4th matchmaking entrant) |
+| `lib/gatekeeper.ts` | `votesRequired(entryCount)` — shared submit gate, mirrors submit API |
+| `lib/ensureProfile.ts` | Creates profile on first vote/submit if OAuth trigger missed; disambiguates duplicate display names |
 | `lib/useUndoShortcuts.ts` | Cmd/Ctrl+Z / Shift+Z undo/redo keyboard bindings |
 | `lib/supabase/types.ts` | All DB types — Profile, Round, Submission, Match, Vote, ArrangementData |
 | `components/BeatdownShell.tsx` | Main studio layout — fetches user, isAdmin, votesCast |
-| `components/SiteNav.tsx` | Shared nav bar (Studio/Arena/Leaderboard) — logo, links, `VOTES_REQUIRED` const |
+| `components/SiteNav.tsx` | Shared nav bar — logo, links, dynamic gatekeeper threshold |
 | `components/ModuleControls.tsx` | Knob row (Vol, Cutoff, Decay, Attack, Res, Pan) + BPM/play + vault dropdown |
 | `components/VaultPanel.tsx` | Pattern vault — add/delete/duplicate/rename, auto-save |
 | `components/ArrangementTimeline.tsx` | Timeline editor — drag blocks, clickable ruler, draggable playhead, loop toggle |
@@ -63,12 +67,14 @@ Timeline stores `{ patternId, moduleType, startSec, durationSec }` — ID refere
 | `app/page.tsx` | Studio (client-only, BeatdownShell dynamic import) |
 | `app/layout.tsx` | Root layout — `data-theme` attribute + pre-paint theme script (no flash) |
 | `app/arena/page.tsx` + `ArenaClient.tsx` | Arena — How It Works card, match cards, voting, vote bar, matchmaker |
-| `app/leaderboard/page.tsx` + `LeaderboardClient.tsx` | ELO leaderboard — podium, stats, tier badges, per-row track playback |
-| `scripts/seed-bot.ts` | Seeds Claude Sonnet 5 + Cursor Fable 5 bot users/submissions (reads `.env.local`, update-in-place on re-run) |
-| `scripts/validate-demo.ts` | Structural validation for `DEMO_TRACK` and `SONNET_TRACK` (grid dims, vault refs, block overlap) |
-| `app/api/submit/route.ts` | Track submission — profile auto-create, Gatekeeper vote gate |
+| `app/leaderboard/page.tsx` + `LeaderboardClient.tsx` | ELO leaderboard — podium, stats, tier badges, per-row track playback, **WON** column (arena votes received) |
+| `scripts/seed-bot.ts` | Seeds all 4 bot users/submissions (reads `.env.local`, update-in-place; does not reset ELO/stats on re-run) |
+| `scripts/bootstrap-arena.ts` | Seeds bots, clears resolved matches in open round, ELO-pairs unmatched subs into active battles |
+| `scripts/repair-profile-stats.ts` | Syncs `submissions_count` + `votes_cast` from source tables after bot re-seeds |
+| `scripts/validate-demo.ts` | Structural validation for all bundled/bot track files |
+| `app/api/submit/route.ts` | Track submission — `ensureProfile`, dynamic Gatekeeper vote gate |
+| `app/api/vote/route.ts` | Vote casting — `ensureProfile`, re-reads match counts, auto-resolves + ELO at 3 votes |
 | `app/api/matchmaker/route.ts` | Gemini 2.0 Flash matchmaker — pairs submissions into matches |
-| `app/api/vote/route.ts` | Vote casting — auto-resolves match + updates ELO at 3 votes |
 | `app/api/admin/route.ts` | Admin API — open/close rounds, toggle user admin status |
 | `app/auth/callback/route.ts` | Google OAuth callback |
 | `supabase/schema.sql` | Full DB schema — tables, RLS, triggers, `resolve_match()` ELO fn |
@@ -83,14 +89,15 @@ Tables: `profiles`, `rounds`, `submissions`, `matches`, `votes`
 Key columns:
 - `profiles.is_admin` — boolean, default false. Added manually via SQL. Managed via admin panel.
 - `profiles.elo_rating` — starts 1000, updated by `resolve_match()`
-- `profiles.votes_cast` — incremented by trigger on each vote insert
+- `profiles.votes_cast` — incremented by trigger on each vote **cast** (gatekeeper stat, shown in Arena)
 - `rounds.status` — `'open' | 'matching' | 'closed'`
 
 Key logic:
 - `resolve_match(p_match_id, p_winner_id)` — Postgres fn, K=32 ELO, marks match resolved
-- `handle_new_user()` trigger — creates profile on auth.users insert (may not fire on OAuth; submit route has explicit fallback)
-- **Gatekeeper** — user must cast `ceil(entry_count / 2)` votes before submitting. Currently effectively 3 votes (`MIN_VOTES_TO_RESOLVE = 3` in `app/api/vote/route.ts`).
-- **Auto-resolve** — vote route calls `resolve_match()` once total votes ≥ 3 with a clear leader
+- `handle_new_user()` trigger — creates profile on auth.users insert (may not fire on OAuth; `ensureProfile()` in vote + submit routes)
+- **Gatekeeper** — user must cast `votesRequired(entry_count)` = `ceil(entry_count / 2)` votes before submitting. Wired via `lib/gatekeeper.ts` in SiteNav, BeatdownShell, Arena, Leaderboard, and submit API.
+- **Auto-resolve** — vote route re-reads match counts after insert, then calls `resolve_match()` once total votes ≥ 3 with a clear leader
+- **Service client** — `createServiceClient()` uses `@supabase/supabase-js` directly (SSR wrapper blocked profile writes)
 
 ---
 
@@ -98,10 +105,10 @@ Key logic:
 
 The vote requirement is surfaced in two places so users aren't surprised:
 
-1. **SUBMIT TRACK item** in the ProfileButton dropdown — goes grey with a `VOTE n/3 FIRST TO UNLOCK` sub-label when `votesCast < 3`. Fetched from profiles in BeatdownShell / SiteNav.
-2. **HOW IT WORKS card** on Arena page — step 2 explicitly says "Vote on 3 tracks to unlock submission."
+1. **SUBMIT TRACK item** in the ProfileButton dropdown — goes grey with a `VOTE n/m FIRST TO UNLOCK` sub-label when `votesCast < votesRequired(entry_count)`. Threshold fetched from open round in BeatdownShell / SiteNav.
+2. **HOW IT WORKS card** on Arena page — step 2 uses dynamic vote count. Collapsed by default so battles are visible without scrolling.
 
-To change the threshold: update `MIN_VOTES_TO_RESOLVE` in `app/api/vote/route.ts` and `VOTES_REQUIRED` in `components/SiteNav.tsx`.
+To change the gatekeeper formula: update `votesRequired()` in `lib/gatekeeper.ts` (submit API imports it). Match auto-resolve threshold is separate: `MIN_VOTES_TO_RESOLVE` in `app/api/vote/route.ts`.
 
 ---
 
@@ -152,6 +159,8 @@ Rules of thumb:
 - Theme state: `data-theme` on `<html>`, persisted to `localStorage.theme`. A synchronous
   inline script in `app/layout.tsx` applies it before first paint (no flash). Toggle lives
   in the ProfileButton dropdown (signed-in users only).
+- **Scrollbars** — Bauhaus/Mondrian custom scrollbars on `.page-scroll`, `.seq-area`, `.bd-scroll` (square ink thumb, red hover, 3px track frame).
+- **Arena / Leaderboard layout** — `.page-shell` (fixed `100dvh`) + `.page-scroll` (scrollable content below nav). Studio stays `100vh` + internal scroll.
 
 ---
 
@@ -172,11 +181,13 @@ WAV files in `public/samples/drums/`.
 - **Time signatures fixed at 4/4, 16 steps** — variable GRID_STEPS deferred
 - **3-vote auto-resolve** — low threshold for early testing, easy to raise
 - **Both panels open by default** for new sessions — returning users keep localStorage state
-- **Google OAuth** profile creation trigger may not fire; submit route has explicit fallback
+- **Google OAuth** profile creation trigger may not fire; `lib/ensureProfile.ts` handles vote + submit (uses service-role client; disambiguates duplicate display names with email tag)
+- **Leaderboard WON column** — counts arena votes **received** on a producer's submissions (not `votes_cast`). Bots show earned votes even though they never cast any.
+- **Bot re-seed** — `seed-bot.ts` / `bootstrap-arena.ts` update username only on existing profiles; no longer zero out `elo_rating` / `submissions_count`. Run `repair-profile-stats.ts` if counts drift.
 - **Credentials file** `docs/supabase and google oauth info.md` is `.gitignore`d — never commit it
 - Service role key was rotated after a security incident; publishable + Google AI keys left (low risk, user decision)
 - **Session load grid sync** — `ProfileButton.applySessionData` sets each module's working `grids[m]` from that vault's `activePatternId` before entering the store. `loadPatternToGrid` auto-saves the current grid into the active vault pattern on switch; if `grids` and `activePatternId` disagree (e.g. old demo snapshots), the first dropdown click would corrupt vault data and make patterns look identical
-- **Demo / bot track shape** — `lib/demoTrack.ts` ("Block Party") uses multiple named 16-step patterns per module and standard 4s timeline blocks (`durationBeats: 8` @ 120 BPM). `lib/sonnetTrack.ts` is the simpler single-block bot layout; `lib/fableTrack.ts` re-exports the demo for the Fable 5 Arena entry
+- **Demo / bot track shape** — `lib/demoTrack.ts` ("Block Party") uses multiple named 16-step patterns per module and standard 4s timeline blocks (`durationBeats: 8` @ 120 BPM). Bot tracks: `sonnetTrack`, `fableTrack` (demo re-export), `composerTrack`, `sparkTrack`. Non-120 BPM tracks use block-index ranges to avoid timeline overlap.
 
 ---
 
@@ -203,10 +214,16 @@ WAV files in `public/samples/drums/`.
 - [x] Full-fidelity arrangement playback — submissions carry `vaults` + `timeline` + `moduleSettings`, so Arena/leaderboard playback matches what the producer heard (older flat-grid submissions fall back gracefully)
 - [x] Leaderboard per-row play buttons — hear any producer's latest track in place
 - [x] Bundled demo track (`lib/demoTrack.ts`) — multi-pattern "Block Party" arrangement, Load Demo Track menu item
-- [x] Bot submissions via `scripts/seed-bot.ts` — Sonnet 5 (simple) and Fable 5 (same as demo)
+- [x] Bot submissions via `scripts/seed-bot.ts` — Sonnet 5, Fable 5, Composer 2.5 Fast, Neon Drift
+- [x] Arena bootstrap script (`scripts/bootstrap-arena.ts`) — seed 4 bots, clear resolved matches, pair active battles
 - [x] Session/vault grid sync on load — distinct patterns visible in vault dropdown after Load Demo Track
 - [x] Dark mode — semantic CSS variable palette, dropdown toggle, localStorage persistence, no-flash inline script
 - [x] Sequencer min-height row floor — short windows scroll instead of crushing rows
+- [x] Arena/Leaderboard scroll — pinned nav, scrollable battle list, Mondrian scrollbars
+- [x] Dynamic gatekeeper — `lib/gatekeeper.ts` synced across UI + submit API
+- [x] OAuth profile bootstrap — `ensureProfile()` on vote + submit; service-role client fix
+- [x] Leaderboard WON column — arena votes received per producer (bots tally correctly)
+- [x] Vote resolution fix — re-read match counts post-trigger; surface `resolve_match` errors
 
 ---
 
@@ -214,7 +231,7 @@ WAV files in `public/samples/drums/`.
 
 - **Theme toggle for signed-out users** — the toggle lives in the profile dropdown, which only renders when signed in; a small standalone nav toggle would cover guests
 - **Continue inline-style → class refactor** — colors are all tokenized now, but ~200 `style={{}}` blocks remain; `globals.css` shows the established pattern (static styling in classes, only dynamic values inline)
-- **Raise vote threshold** — `MIN_VOTES_TO_RESOLVE` in `app/api/vote/route.ts` + `VOTES_REQUIRED` in `components/SiteNav.tsx`
+- **Raise vote threshold** — `MIN_VOTES_TO_RESOLVE` in `app/api/vote/route.ts`; gatekeeper formula in `lib/gatekeeper.ts`
 - **Round auto-close** — cron or Supabase scheduled fn to close rounds after N days
 - **Push notifications / email** — notify on new match or result
 - **First-time Studio onboarding** — panels open by default is in place; a "?" help overlay would be the next step

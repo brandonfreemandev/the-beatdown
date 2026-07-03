@@ -9,6 +9,7 @@ import SiteNav from './SiteNav';
 import ModuleControls from './ModuleControls';
 import ArrangementTimeline from './ArrangementTimeline';
 import SubmitModal from './SubmitModal';
+import { votesRequired } from '@/lib/gatekeeper';
 import type { User } from '@supabase/supabase-js';
 
 export default function BeatdownShell() {
@@ -18,6 +19,7 @@ export default function BeatdownShell() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [votesCast, setVotesCast] = useState<number | null>(null);
+  const [votesRequiredCount, setVotesRequiredCount] = useState(votesRequired(4));
   const [submitOpen, setSubmitOpen] = useState(false);
 
   const { isPlaying, playhead, toggle, arrIsPlaying, timelineSec, arrLoop, setArrLoop, toggleArr, seekArr, returnToStart } = usePlayback();
@@ -26,19 +28,23 @@ export default function BeatdownShell() {
   useEffect(() => {
     audioEngine.init();
     const supabase = createClient();
+    const loadProfile = async (userId: string) => {
+      const { data: profile } = await supabase.from('profiles').select('is_admin, votes_cast').eq('id', userId).maybeSingle() as any;
+      setIsAdmin(profile?.is_admin ?? false);
+      setVotesCast(profile?.votes_cast ?? 0);
+    };
     const loadUser = async () => {
       const { data } = await supabase.auth.getUser();
       setUser(data.user);
-      if (data.user) {
-        const { data: profile } = await supabase.from('profiles').select('is_admin, votes_cast').eq('id', data.user.id).single() as any;
-        setIsAdmin(profile?.is_admin ?? false);
-        setVotesCast(profile?.votes_cast ?? 0);
-      }
+      if (data.user) await loadProfile(data.user.id);
+      const { data: round } = await supabase.from('rounds').select('entry_count').eq('status', 'open').order('started_at', { ascending: false }).limit(1).maybeSingle();
+      if (round) setVotesRequiredCount(votesRequired(round.entry_count));
     };
     loadUser();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
-      if (!session?.user) setIsAdmin(false);
+      if (session?.user) loadProfile(session.user.id);
+      else { setIsAdmin(false); setVotesCast(null); }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -51,6 +57,7 @@ export default function BeatdownShell() {
         user={user}
         isAdmin={isAdmin}
         votesCast={votesCast}
+        votesRequired={votesRequiredCount}
       />
 
       {/* Module Tabs */}

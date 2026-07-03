@@ -5,13 +5,14 @@ import type { ReactElement } from 'react';
 
 type Page = 'studio' | 'arena' | 'leaderboard';
 
-const VOTES_REQUIRED = 3;
+import { votesRequired } from '@/lib/gatekeeper';
 
 interface Props {
   currentPage: Page;
   user: User | null;
   isAdmin?: boolean;
   votesCast?: number | null;
+  votesRequired?: number;
   /** Studio provides this to open the submit modal directly. Arena/Leaderboard omit it — submit routes to Studio instead. */
   onSubmit?: () => void;
 }
@@ -63,8 +64,9 @@ const NAV_ICONS: Record<Page, () => ReactElement> = {
   leaderboard: TrophyIcon,
 };
 
-export default function SiteNav({ currentPage, user, isAdmin = false, votesCast = null, onSubmit }: Props) {
-  const gateBlocked = user !== null && votesCast !== null && votesCast < VOTES_REQUIRED;
+export default function SiteNav({ currentPage, user, isAdmin = false, votesCast = null, votesRequired: votesRequiredProp, onSubmit }: Props) {
+  const threshold = votesRequiredProp ?? votesRequired(4);
+  const gateBlocked = user !== null && votesCast !== null && votesCast < threshold;
 
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', height: 48, borderTop: '3px solid var(--bd-ink)', borderBottom: '3px solid var(--bd-ink)', background: 'var(--bd-bg)', flexShrink: 0 }}>
@@ -94,7 +96,7 @@ export default function SiteNav({ currentPage, user, isAdmin = false, votesCast 
         onSubmit={onSubmit ?? (() => { window.location.href = '/'; })}
         gateBlocked={gateBlocked}
         votesCast={votesCast}
-        votesRequired={VOTES_REQUIRED}
+        votesRequired={threshold}
       />
     </div>
   );

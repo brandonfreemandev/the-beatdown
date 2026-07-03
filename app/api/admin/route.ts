@@ -5,7 +5,7 @@ async function requireAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const service = await createServiceClient();
+  const service = createServiceClient();
   const { data: profile } = await (service.from('profiles') as any)
     .select('is_admin').eq('id', user.id).single();
   return profile?.is_admin ? { user, service } : null;

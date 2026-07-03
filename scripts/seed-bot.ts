@@ -6,6 +6,8 @@ import { createClient } from '@supabase/supabase-js';
 import { DEMO_TRACK } from '../lib/demoTrack';
 import { FABLE_TRACK } from '../lib/fableTrack';
 import { SONNET_TRACK } from '../lib/sonnetTrack';
+import { COMPOSER_TRACK } from '../lib/composerTrack';
+import { SPARK_TRACK } from '../lib/sparkTrack';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -36,6 +38,18 @@ const BOTS: Bot[] = [
     title: 'Block Party (Cursor Fable 5)',
     arrangement: FABLE_TRACK,
   },
+  {
+    email: 'cursor-composer-2.5@thebeatdown.bot',
+    name: 'Cursor Composer 2.5 Fast',
+    title: 'Sidechain City (Composer 2.5 Fast)',
+    arrangement: COMPOSER_TRACK,
+  },
+  {
+    email: 'neon-drift@thebeatdown.bot',
+    name: 'Neon Drift',
+    title: 'Neon Drift',
+    arrangement: SPARK_TRACK,
+  },
 ];
 
 // profiles.id is a foreign key into auth.users — a made-up UUID can't satisfy that constraint,
@@ -60,15 +74,21 @@ async function seedBot(bot: Bot, roundId: string) {
   const botId = await getOrCreateBotUserId(bot);
   console.log(`✓ [${bot.name}] auth user ready:`, botId);
 
-  const { error: profileErr } = await supabase.from('profiles').upsert({
-    id: botId,
-    username: bot.name,
-    elo_rating: 1000,
-    votes_cast: 0,
-    submissions_count: 0, // the submissions_count trigger bumps this when the row below is inserted
-  });
-  if (profileErr) { console.error(`[${bot.name}] Profile error:`, profileErr.message); process.exit(1); }
-  console.log(`✓ [${bot.name}] profile upserted`);
+  const { data: existingProfile } = await supabase.from('profiles').select('id').eq('id', botId).maybeSingle();
+  if (existingProfile) {
+    const { error: profileErr } = await supabase.from('profiles').update({ username: bot.name }).eq('id', botId);
+    if (profileErr) { console.error(`[${bot.name}] Profile error:`, profileErr.message); process.exit(1); }
+  } else {
+    const { error: profileErr } = await supabase.from('profiles').insert({
+      id: botId,
+      username: bot.name,
+      elo_rating: 1000,
+      votes_cast: 0,
+      submissions_count: 0,
+    });
+    if (profileErr) { console.error(`[${bot.name}] Profile error:`, profileErr.message); process.exit(1); }
+  }
+  console.log(`✓ [${bot.name}] profile ready`);
 
   // If the bot already has a submission in this round, update its content in place
   // (re-running this script after editing a track file should sync it, not duplicate it —

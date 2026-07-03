@@ -19,16 +19,22 @@ npm run build      # production build
 Supabase and Google OAuth credentials go in `.env.local` (never committed). The studio
 works signed-out as a guest; auth is required for Arena voting and submissions.
 
-Seed bot submissions into the current open round (Claude Sonnet 5 + Cursor Fable 5):
+### Bot tracks & Arena bootstrap
+
+Four bot producers seed the Arena when human traffic is low:
+
+| Bot | Track file | Submission |
+|-----|------------|------------|
+| Claude Sonnet 5 | `lib/sonnetTrack.ts` | Hot Jam |
+| Cursor Fable 5 | `lib/fableTrack.ts` | Block Party |
+| Cursor Composer 2.5 Fast | `lib/composerTrack.ts` | Sidechain City |
+| Neon Drift | `lib/sparkTrack.ts` | Neon Drift |
 
 ```bash
-npx tsx scripts/seed-bot.ts   # reads .env.local
-```
-
-Validate demo/bot track JSON shape before seeding:
-
-```bash
-npx tsx scripts/validate-demo.ts
+npx tsx scripts/validate-demo.ts      # validate all track JSON shape
+npx tsx scripts/seed-bot.ts           # seed/update bot submissions
+npx tsx scripts/bootstrap-arena.ts    # seed bots + pair active battles
+npx tsx scripts/repair-profile-stats.ts  # fix submissions_count / votes_cast drift
 ```
 
 **Load Demo Track** (profile dropdown) loads `lib/demoTrack.ts` — "Block Party", a human-style session with named vault patterns per module and a 48s arrangement of 4s blocks.
@@ -38,7 +44,7 @@ npx tsx scripts/validate-demo.ts
 Mondrian-Brutalist: rectangles only, no rounded corners, no shadows, no gradients,
 monospace everywhere. Light and dark themes are driven by semantic CSS variables in
 `app/globals.css` (`--bd-ink`, `--bd-bg`, …) — never hardcode a color; see the theming
-section in `docs/agent_handoff.md`.
+section in `docs/agent_handoff.md`. Custom Bauhaus scrollbars on scrollable regions.
 
 ## Docs
 

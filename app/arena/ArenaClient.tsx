@@ -21,25 +21,26 @@ interface Props {
   profile: Profile | null;
   matches: ArenaMatch[];
   userVotes: string[];
+  votesRequired: number;
 }
 
 const TRACK_COLORS = { a: '#74b9f3', b: '#ffb300' };
 
-const HOW_IT_WORKS = [
+const HOW_IT_WORKS = (voteThreshold: number) => [
   { step: '1 · MAKE',    desc: 'Compose a beat in the Studio using all 5 modules.' },
-  { step: '2 · VOTE',    desc: 'Vote on 3 tracks here in the Arena. This unlocks your ability to submit.' },
+  { step: '2 · VOTE',    desc: `Vote on ${voteThreshold} track${voteThreshold !== 1 ? 's' : ''} here in the Arena. This unlocks your ability to submit.` },
   { step: '3 · SUBMIT',  desc: 'Head to Studio, hit SUBMIT, give your track a title.' },
   { step: '4 · WIN ELO', desc: "You're paired blind. After 3 votes the winner gains ELO." },
 ];
 
-export default function ArenaClient({ user, profile, matches, userVotes }: Props) {
+export default function ArenaClient({ user, profile, matches, userVotes, votesRequired: voteThreshold }: Props) {
   const router = useRouter();
   const [voted, setVoted] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [matchmaking, setMatchmaking] = useState(false);
   const [matchmakeResult, setMatchmakeResult] = useState('');
-  const [howOpen, setHowOpen] = useState(true);
+  const [howOpen, setHowOpen] = useState(false);
 
   const runMatchmaker = async () => {
     setMatchmaking(true);
@@ -74,10 +75,17 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
     userVotes.includes(matchId) || voted[matchId];
 
   return (
-    <div style={{ fontFamily: 'monospace', background: 'var(--bd-bg)', minHeight: '100vh', color: 'var(--bd-ink)' }}>
-      <SiteNav currentPage="arena" user={user} isAdmin={profile?.is_admin ?? false} votesCast={profile?.votes_cast ?? null} />
+    <div
+      className="page-shell"
+      style={{ fontFamily: 'monospace', display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', background: 'var(--bd-bg)', color: 'var(--bd-ink)' }}
+    >
+      <SiteNav currentPage="arena" user={user} isAdmin={profile?.is_admin ?? false} votesCast={profile?.votes_cast ?? null} votesRequired={voteThreshold} />
 
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px' }}>
+      <div
+        className="page-scroll"
+        style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}
+      >
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 64px' }}>
 
         {/* How it works */}
         <div style={{ border: '3px solid var(--bd-ink)', marginBottom: 32 }}>
@@ -97,7 +105,7 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
           </button>
           {howOpen && (
             <div style={{ display: 'flex' }}>
-              {HOW_IT_WORKS.map(({ step, desc }, i) => (
+              {HOW_IT_WORKS(voteThreshold).map(({ step, desc }, i) => (
                 <div key={step} style={{
                   flex: 1, padding: '14px 16px',
                   borderRight: i < 3 ? '3px solid var(--bd-ink)' : 'none',
@@ -199,14 +207,14 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
               </div>
 
               {/* Tracks */}
-              <div style={{ display: 'flex' }}>
+              <div className="arena-match-tracks">
                 <ArenaPlayer
                   arrangement={match.track_a.arrangement}
                   color={TRACK_COLORS.a}
                   label="TRACK A"
                   title={match.track_a.title}
                 />
-                <div style={{ width: 3, background: 'var(--bd-ink)', flexShrink: 0 }} />
+                <div className="arena-track-divider" />
                 <ArenaPlayer
                   arrangement={match.track_b.arrangement}
                   color={TRACK_COLORS.b}
@@ -250,6 +258,7 @@ export default function ArenaClient({ user, profile, matches, userVotes }: Props
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );

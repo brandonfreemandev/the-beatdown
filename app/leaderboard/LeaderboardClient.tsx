@@ -20,6 +20,7 @@ interface RankingRow {
   username: string | null;
   elo_rating: number;
   votes_cast: number;
+  votes_received: number;
   submissions_count: number;
   is_admin?: boolean;
   track: { title: string; arrangement: ArrangementData } | null;
@@ -29,17 +30,26 @@ interface Props {
   rankings: RankingRow[];
   user: User | null;
   myProfile: RankingRow | null;
+  votesRequired: number;
 }
 
-export default function LeaderboardClient({ rankings, user, myProfile }: Props) {
+export default function LeaderboardClient({ rankings, user, myProfile, votesRequired: voteThreshold }: Props) {
   const [activeRowId, setActiveRowId] = useState<string | null>(null);
   const total = rankings.length;
 
   return (
-    <div style={{ fontFamily: 'monospace', background: 'var(--bd-bg)', minHeight: '100vh', color: 'var(--bd-ink)' }}>
-      <SiteNav currentPage="leaderboard" user={user} isAdmin={myProfile?.is_admin ?? false} votesCast={myProfile?.votes_cast ?? null} />
+    <div
+      className="page-shell"
+      style={{ fontFamily: 'monospace', display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', background: 'var(--bd-bg)', color: 'var(--bd-ink)' }}
+    >
+      <SiteNav currentPage="leaderboard" user={user} isAdmin={myProfile?.is_admin ?? false} votesCast={myProfile?.votes_cast ?? null} votesRequired={voteThreshold} />
 
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px' }}>
+      <div
+        className="page-scroll"
+        style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}
+      >
+
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px 64px' }}>
 
         {/* Stats header */}
         <div style={{ display: 'flex', border: '3px solid var(--bd-ink)', marginBottom: 32 }}>
@@ -70,7 +80,7 @@ export default function LeaderboardClient({ rankings, user, myProfile }: Props) 
             <span />
             <span>PRODUCER</span>
             <span style={{ textAlign: 'right' }}>ELO</span>
-            <span style={{ textAlign: 'right' }}>VOTES</span>
+            <span style={{ textAlign: 'right' }}>WON</span>
             <span style={{ textAlign: 'right' }}>TIER</span>
           </div>
 
@@ -112,7 +122,7 @@ export default function LeaderboardClient({ rankings, user, myProfile }: Props) 
                   {p.elo_rating}
                 </span>
                 <span style={{ textAlign: 'right', color: isMe ? 'var(--bd-on-ink-muted)' : medalBg ? '#666' : 'var(--bd-muted)' }}>
-                  {p.votes_cast}
+                  {p.votes_received}
                 </span>
                 <span style={{ textAlign: 'right' }}>
                   <span style={{
@@ -132,6 +142,7 @@ export default function LeaderboardClient({ rankings, user, myProfile }: Props) 
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

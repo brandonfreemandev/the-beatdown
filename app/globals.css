@@ -353,6 +353,83 @@
 .lb-play.playing { background: var(--bd-ink); color: var(--bd-on-ink); }
 .lb-play svg { display: block; }
 
+/* Arena / Leaderboard — nav stays pinned; match list scrolls inside the viewport */
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bd-bg);
+  color: var(--bd-ink);
+}
+.page-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+/* Bauhaus / Mondrian scrollbars — square ink thumb, framed track, red hover */
+.bd-scroll,
+.page-scroll,
+.seq-area,
+.main-area {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bd-ink) var(--bd-bg-alt);
+}
+.bd-scroll::-webkit-scrollbar,
+.page-scroll::-webkit-scrollbar,
+.seq-area::-webkit-scrollbar,
+.main-area::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+.bd-scroll::-webkit-scrollbar-track,
+.page-scroll::-webkit-scrollbar-track,
+.seq-area::-webkit-scrollbar-track,
+.main-area::-webkit-scrollbar-track {
+  background: var(--bd-bg-alt);
+  border-left: 3px solid var(--bd-ink);
+}
+.bd-scroll::-webkit-scrollbar-thumb,
+.page-scroll::-webkit-scrollbar-thumb,
+.seq-area::-webkit-scrollbar-thumb,
+.main-area::-webkit-scrollbar-thumb {
+  background: var(--bd-ink);
+  border: 3px solid var(--bd-bg-alt);
+  border-radius: 0;
+}
+.bd-scroll::-webkit-scrollbar-thumb:hover,
+.page-scroll::-webkit-scrollbar-thumb:hover,
+.seq-area::-webkit-scrollbar-thumb:hover,
+.main-area::-webkit-scrollbar-thumb:hover {
+  background: var(--bd-red);
+}
+.bd-scroll::-webkit-scrollbar-corner,
+.page-scroll::-webkit-scrollbar-corner,
+.seq-area::-webkit-scrollbar-corner,
+.main-area::-webkit-scrollbar-corner {
+  background: var(--bd-bg-alt);
+}
+
+.arena-match-tracks { display: flex; }
+.arena-match-tracks > .arena-track-divider {
+  width: 3px;
+  background: var(--bd-ink);
+  flex-shrink: 0;
+}
+@media (max-width: 768px) {
+  .arena-match-tracks { flex-direction: column; }
+  .arena-match-tracks > .arena-track-divider {
+    width: 100%;
+    height: 3px;
+  }
+}
+
 @media (max-width: 768px) {
   .main-area {
     flex-direction: column;
@@ -431,8 +508,8 @@
 }
 
 html, body {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  margin: 0;
   background: var(--bd-bg);
   color: var(--bd-ink);
   font-family: 'Courier New', Courier, monospace;

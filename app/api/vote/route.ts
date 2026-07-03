@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { ensureProfile } from '@/lib/ensureProfile';
 import type { Match } from '@/lib/supabase/types';
 
 const MIN_VOTES_TO_RESOLVE = 3;
@@ -14,7 +15,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'matchId and votedForId required' }, { status: 400 });
   }
 
-  const service = await createServiceClient();
+  const service = createServiceClient();
+
+  const { error: profileErr } = await ensureProfile(service, user);
+  if (profileErr) {
+    console.error('Profile creation failed:', profileErr);
+    return NextResponse.json({ error: 'Could not create user profile' }, { status: 500 });
+  }
 
   const { data: match } = await service
     .from('matches')
@@ -47,14 +54,27 @@ export async function POST(request: Request) {
   }
   if (error) return NextResponse.json({ error: (error as any).message }, { status: 500 });
 
-  // Check updated vote counts and auto-resolve if threshold reached
-  const newVotesA = match.votes_a + (votedForId === match.track_a_id ? 1 : 0);
-  const newVotesB = match.votes_b + (votedForId === match.track_b_id ? 1 : 0);
-  const total = newVotesA + newVotesB;
+  // Re-read counts after the DB trigger increments them
+  const { data: updated } = await service
+    .from('matches')
+    .select('votes_a, votes_b')
+    .eq('id', matchId)
+    .single() as { data: Pick<Match, 'votes_a' | 'votes_b'> | null; error: unknown };
 
-  if (total >= MIN_VOTES_TO_RESOLVE && newVotesA !== newVotesB) {
-    const winnerId = newVotesA > newVotesB ? match.track_a_id : match.track_b_id;
-    await (service.rpc as any)('resolve_match', { p_match_id: matchId, p_winner_id: winnerId });
+  const votesA = updated?.votes_a ?? 0;
+  const votesB = updated?.votes_b ?? 0;
+  const total = votesA + votesB;
+
+  if (total >= MIN_VOTES_TO_RESOLVE && votesA !== votesB) {
+    const winnerId = votesA > votesB ? match.track_a_id : match.track_b_id;
+    const { error: resolveErr } = await service.rpc('resolve_match', {
+      p_match_id: matchId,
+      p_winner_id: winnerId,
+    });
+    if (resolveErr) {
+      console.error('resolve_match failed:', resolveErr.message);
+      return NextResponse.json({ error: resolveErr.message }, { status: 500 });
+    }
     return NextResponse.json({ ok: true, resolved: true, winnerId });
   }
 
