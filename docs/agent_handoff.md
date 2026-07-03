@@ -48,7 +48,9 @@ Timeline stores `{ patternId, moduleType, startSec, durationSec }` — ID refere
 | `lib/useTrackPlayback.ts` | Shared playback hook for submitted arrangements (ArenaPlayer + leaderboard rows) |
 | `lib/audioEngine.ts` | Web Audio signal chain, drum samples, preview |
 | `lib/knobMapping.ts` | Knob 0–1 value → engine parameter mappings (shared by UI + track playback) |
-| `lib/demoTrack.ts` | Bundled demo arrangement — Load Demo Track menu item + seed-bot submission |
+| `lib/demoTrack.ts` | Bundled demo arrangement ("Block Party") — Load Demo Track menu item |
+| `lib/sonnetTrack.ts` | Claude Sonnet 5 bot submission (simpler single-block layout) |
+| `lib/fableTrack.ts` | Re-exports `DEMO_TRACK` for Cursor Fable 5's Arena submission |
 | `lib/useUndoShortcuts.ts` | Cmd/Ctrl+Z / Shift+Z undo/redo keyboard bindings |
 | `lib/supabase/types.ts` | All DB types — Profile, Round, Submission, Match, Vote, ArrangementData |
 | `components/BeatdownShell.tsx` | Main studio layout — fetches user, isAdmin, votesCast |
@@ -197,7 +199,8 @@ WAV files in `public/samples/drums/`.
 - [x] Per-module pan + res stored in Zustand, persisted
 - [x] Full-fidelity arrangement playback — submissions carry `vaults` + `timeline` + `moduleSettings`, so Arena/leaderboard playback matches what the producer heard (older flat-grid submissions fall back gracefully)
 - [x] Leaderboard per-row play buttons — hear any producer's latest track in place
-- [x] Bundled demo track (`lib/demoTrack.ts`) — Load Demo Track menu item + `scripts/seed-bot.ts`
+- [x] Bundled demo track (`lib/demoTrack.ts`) — multi-pattern "Block Party" arrangement, Load Demo Track menu item
+- [x] Bot submissions via `scripts/seed-bot.ts` — Sonnet 5 (simple) and Fable 5 (same as demo)
 - [x] Dark mode — semantic CSS variable palette, dropdown toggle, localStorage persistence, no-flash inline script
 - [x] Sequencer min-height row floor — short windows scroll instead of crushing rows
 

@@ -1,6 +1,14 @@
 import type { ModuleType } from './audioEngine';
 import type { Grid, ModuleVault, ModuleSettings, TimelineBlock } from './store';
-import { MODULES, MODULE_LABELS, GRID_ROWS, GRID_STEPS } from './store';
+import { GRID_ROWS, GRID_STEPS } from './store';
+
+// ── Bundled demo track ("Block Party") ────────────────────────────────────────
+// Loaded via ProfileButton → "♫ LOAD DEMO TRACK". Structured like a human
+// session: several named 16-step patterns per module vault, assembled on the
+// timeline as standard-length blocks (durationBeats: 8 → 4.0s at 120 BPM).
+
+const BPM = 120;
+const BLOCK_SEC = (8 / BPM) * 60; // 4.0s — the standard block the UI produces
 
 function grid(rows: Record<number, number[]>): Grid {
   return Array.from({ length: GRID_ROWS }, (_, r) => {
@@ -9,107 +17,185 @@ function grid(rows: Record<number, number[]>): Grid {
   });
 }
 
-function emptyGrid(): Grid {
-  return Array.from({ length: GRID_ROWS }, () => Array(GRID_STEPS).fill(false));
-}
+// ── Patterns ──────────────────────────────────────────────────────────────────
+// Drum rows: KICK, KICK 2, SNARE, SNARE 2, GHOST, HI-HAT, HI-HAT 2, OPEN HAT
 
-// Rows: KICK, KICK 2, SNARE, SNARE 2, GHOST, HI-HAT, HI-HAT 2, OPEN HAT
-const drumGrid = grid({
-  0: [0, 4, 8, 12],
+const DRUM_VERSE = grid({
+  0: [0, 6, 8],
   2: [4, 12],
   5: [0, 2, 4, 6, 8, 10, 12, 14],
+});
+
+const DRUM_CHORUS = grid({
+  0: [0, 6, 8, 10],
+  2: [4, 12],
+  3: [15],
+  4: [3, 11],
+  5: [0, 2, 4, 6, 8, 10, 12, 14],
+  7: [6, 14],
+});
+
+const DRUM_FILL = grid({
+  0: [0, 8],
+  2: [4, 10, 12, 14, 15],
+  3: [11, 13],
+  5: [0, 2, 4, 6],
   7: [15],
 });
 
-// SCALE_FREQS.bass = [55, 73.4, 82.4, 110, 146.8, 164.8, 220, 293.7]
-const bassGrid = grid({
-  0: [0, 4, 8, 12],
-  2: [10],
+const BASS_ROOT = grid({
+  0: [0, 3, 8, 11],
+  3: [6, 14],
 });
 
-// SCALE_FREQS.pad = [261.6, 293.7, 329.6, 369.9, 415.3, 466.2, 523.2, 587.3]
-const padGrid = grid({
+const BASS_WALK = grid({
+  0: [0, 3, 6],
+  1: [8, 11],
+  2: [14],
+});
+
+const PAD_AM = grid({
   0: [0, 8],
   2: [0, 8],
-  4: [0, 8],
+  6: [0, 8],
 });
 
-// SCALE_FREQS.synth = [220, 246.9, 261.6, 293.7, 329.6, 369.9, 415.3, 440]
-const synthGrid = grid({
+const PAD_D = grid({
+  1: [0, 8],
+  3: [0, 8],
+  7: [0, 8],
+});
+
+const SYNTH_HOOK = grid({
+  7: [0],
+  4: [2, 10],
+  3: [4, 8],
+  2: [6, 12],
+  0: [14],
+});
+
+const SYNTH_ANSWER = grid({
+  2: [0, 8],
+  3: [3],
+  4: [6],
+  0: [11],
+});
+
+const ARP_CLIMB = grid({
   0: [0, 8],
-  2: [2, 6, 14],
-  4: [4],
+  2: [2, 10],
+  4: [4, 12],
+  7: [6, 14],
 });
 
-// SCALE_FREQS.arp = [440, 493.9, 523.2, 587.3, 659.3, 739.9, 830.6, 880]
-const arpGrid = grid({
-  0: [0, 4, 8, 12],
-  1: [1, 5, 9, 13],
-  2: [2, 6, 10, 14],
-  3: [3, 7, 11, 15],
+const ARP_CASCADE = grid({
+  7: [0, 8],
+  4: [2, 10],
+  2: [4, 12],
+  0: [6, 14],
 });
 
-const DEMO_GRIDS: Record<ModuleType, Grid> = {
-  drum: drumGrid,
-  bass: bassGrid,
-  pad: padGrid,
-  synth: synthGrid,
-  arp: arpGrid,
+// ── Vaults ────────────────────────────────────────────────────────────────────
+
+interface PatternSpec { key: string; name: string; grid: Grid }
+
+const PATTERNS: Record<ModuleType, PatternSpec[]> = {
+  drum: [
+    { key: 'verse',  name: 'VERSE BEAT',  grid: DRUM_VERSE },
+    { key: 'chorus', name: 'CHORUS BEAT', grid: DRUM_CHORUS },
+    { key: 'fill',   name: 'SNARE FILL',  grid: DRUM_FILL },
+  ],
+  bass: [
+    { key: 'root', name: 'ROOT PULSE', grid: BASS_ROOT },
+    { key: 'walk', name: 'A TO D WALK', grid: BASS_WALK },
+  ],
+  pad: [
+    { key: 'am', name: 'AM STACK', grid: PAD_AM },
+    { key: 'd',  name: 'D STACK',  grid: PAD_D },
+  ],
+  synth: [
+    { key: 'hook',   name: 'HOOK',   grid: SYNTH_HOOK },
+    { key: 'answer', name: 'ANSWER', grid: SYNTH_ANSWER },
+  ],
+  arp: [
+    { key: 'climb',   name: 'CLIMB',   grid: ARP_CLIMB },
+    { key: 'cascade', name: 'CASCADE', grid: ARP_CASCADE },
+  ],
 };
 
-function patternId(module: ModuleType): string {
-  return `${module}-demo-1`;
-}
+const pid = (module: ModuleType, key: string) => `${module}-demo-${key}`;
 
-function demoVault(module: ModuleType): ModuleVault {
-  return {
-    patterns: [
-      {
-        id: patternId(module),
-        moduleType: module,
-        grid: DEMO_GRIDS[module],
-        data: { patternName: `${MODULE_LABELS[module]} 1`, durationBeats: 8, notes: [], activeModules: { [module]: true } },
-      },
-      {
-        id: `${module}-demo-2`,
-        moduleType: module,
-        grid: emptyGrid(),
-        data: { patternName: `${MODULE_LABELS[module]} 2`, durationBeats: 8, notes: [], activeModules: { [module]: true } },
-      },
-    ],
-    activePatternId: patternId(module),
+const DEMO_VAULTS = {} as Record<ModuleType, ModuleVault>;
+for (const m of Object.keys(PATTERNS) as ModuleType[]) {
+  DEMO_VAULTS[m] = {
+    patterns: PATTERNS[m].map((p) => ({
+      id: pid(m, p.key),
+      moduleType: m,
+      grid: p.grid,
+      data: { patternName: p.name, durationBeats: 8, notes: [], activeModules: { [m]: true } },
+    })),
+    activePatternId: pid(m, PATTERNS[m][0].key),
     vaultOpen: false,
   };
 }
 
-const DEMO_VAULTS: Record<ModuleType, ModuleVault> = {} as Record<ModuleType, ModuleVault>;
-for (const m of MODULES) DEMO_VAULTS[m] = demoVault(m);
+// ── Timeline ──────────────────────────────────────────────────────────────────
 
-function block(id: string, module: ModuleType, startSec: number, durationSec: number): TimelineBlock {
-  return { id, moduleType: module, patternId: patternId(module), startSec, durationSec };
+function blocksFor(module: ModuleType, key: string, spans: Array<[number, number]>): TimelineBlock[] {
+  const out: TimelineBlock[] = [];
+  for (const [start, end] of spans) {
+    for (let sec = start; sec < end; sec += BLOCK_SEC) {
+      out.push({
+        id: `demo-${module}-${key}-${sec}`,
+        moduleType: module,
+        patternId: pid(module, key),
+        startSec: sec,
+        durationSec: BLOCK_SEC,
+      });
+    }
+  }
+  return out;
 }
 
-// Drums + bass throughout, pad/synth/arp stagger in — one pattern per module, no variations.
+// 48s form: INTRO 0–8 · VERSE 8–16 · BUILD 16–24 · CHORUS 24–32 · VERSE 2 32–40 · FINAL CHORUS 40–48
 const DEMO_TIMELINE: TimelineBlock[] = [
-  block('demo-drum-1', 'drum', 0, 48),
-  block('demo-bass-1', 'bass', 0, 48),
-  block('demo-pad-1', 'pad', 12, 36),
-  block('demo-synth-1', 'synth', 24, 24),
-  block('demo-arp-1', 'arp', 36, 12),
+  ...blocksFor('drum', 'verse',  [[8, 20], [32, 36]]),
+  ...blocksFor('drum', 'fill',   [[20, 24], [36, 40]]),
+  ...blocksFor('drum', 'chorus', [[24, 32], [40, 48]]),
+
+  ...blocksFor('bass', 'root', [[8, 24], [32, 40]]),
+  ...blocksFor('bass', 'walk', [[24, 32], [40, 48]]),
+
+  ...blocksFor('pad', 'am', [[4, 16], [32, 40]]),
+  ...blocksFor('pad', 'd',  [[16, 32], [40, 48]]),
+
+  ...blocksFor('synth', 'hook',   [[24, 32], [40, 48]]),
+  ...blocksFor('synth', 'answer', [[32, 40]]),
+
+  ...blocksFor('arp', 'climb',   [[0, 8], [16, 32]]),
+  ...blocksFor('arp', 'cascade', [[40, 48]]),
 ];
 
+const DEMO_GRIDS: Record<ModuleType, Grid> = {
+  drum: DRUM_CHORUS,
+  bass: BASS_WALK,
+  pad: PAD_D,
+  synth: SYNTH_HOOK,
+  arp: ARP_CLIMB,
+};
+
 const DEMO_MODULE_SETTINGS: Record<ModuleType, ModuleSettings> = {
-  drum:  { volume: 0.8,  cutoff: 0.9,  decay: 0.15, attack: 0.02, res: 0.1,  pan: 0.5 },
-  bass:  { volume: 0.75, cutoff: 0.35, decay: 0.4,  attack: 0.05, res: 0.15, pan: 0.5 },
-  pad:   { volume: 0.55, cutoff: 0.5,  decay: 0.85, attack: 0.4,  res: 0.05, pan: 0.4 },
-  synth: { volume: 0.6,  cutoff: 0.7,  decay: 0.35, attack: 0.08, res: 0.2,  pan: 0.6 },
-  arp:   { volume: 0.45, cutoff: 0.85, decay: 0.2,  attack: 0.01, res: 0.25, pan: 0.65 },
+  drum:  { volume: 0.8,  cutoff: 0.95, decay: 0.12, attack: 0.01, res: 0.05, pan: 0.5 },
+  bass:  { volume: 0.78, cutoff: 0.3,  decay: 0.45, attack: 0.03, res: 0.2,  pan: 0.5 },
+  pad:   { volume: 0.5,  cutoff: 0.45, decay: 0.9,  attack: 0.5,  res: 0.05, pan: 0.45 },
+  synth: { volume: 0.62, cutoff: 0.75, decay: 0.3,  attack: 0.05, res: 0.15, pan: 0.58 },
+  arp:   { volume: 0.42, cutoff: 0.9,  decay: 0.15, attack: 0.01, res: 0.3,  pan: 0.68 },
 };
 
 export const DEMO_TRACK = {
   grids: DEMO_GRIDS,
   vaults: DEMO_VAULTS,
   timeline: DEMO_TIMELINE,
-  bpm: 100,
+  bpm: BPM,
   moduleSettings: DEMO_MODULE_SETTINGS,
 };
