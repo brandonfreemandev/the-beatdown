@@ -405,7 +405,7 @@
 .lb-row-clickable:focus-visible { outline: 3px solid var(--bd-red); outline-offset: -3px; }
 .lb-chevron { display: inline-flex; width: 14px; justify-content: center; vertical-align: -1px; }
 .lb-chevron svg { display: block; }
-.lb-expand { padding: 14px 16px 16px 33px; background: var(--bd-bg-alt); }
+.lb-expand { padding: 14px 24px 16px; background: var(--bd-bg-alt); }
 .lb-expand-head {
   font-family: monospace; font-size: 8px; font-weight: 700; letter-spacing: 2px;
   color: var(--bd-muted); margin-bottom: 10px;
