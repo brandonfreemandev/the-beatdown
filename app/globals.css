@@ -400,6 +400,17 @@
 .lb-col-won { text-align: right; }
 .lb-col-tier { text-align: right; }
 
+/* Expandable track preview — one row open at a time, sits flush under its row */
+.lb-row-clickable { cursor: pointer; }
+.lb-row-clickable:focus-visible { outline: 3px solid var(--bd-red); outline-offset: -3px; }
+.lb-chevron { display: inline-block; width: 12px; font-size: 8px; vertical-align: 1px; }
+.lb-expand { padding: 14px 16px 16px 33px; background: var(--bd-bg-alt); }
+.lb-expand-head {
+  font-family: monospace; font-size: 8px; font-weight: 700; letter-spacing: 2px;
+  color: var(--bd-muted); margin-bottom: 10px;
+}
+.lb-expand-head strong { color: var(--bd-ink); font-size: 10px; font-weight: 900; letter-spacing: 1px; }
+
 /* Arena / Leaderboard — nav stays pinned; match list scrolls inside the viewport */
 .page-shell {
   display: flex;
@@ -597,6 +608,7 @@
     font-size: 10px;
   }
   .lb-col-tier { display: none; }
+  .lb-expand { padding: 10px 8px 12px 12px; }
 }
 
 html, body {

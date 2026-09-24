@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import SiteNav from '@/components/SiteNav';
+import SequencerPreview from '@/components/SequencerPreview';
 import { useTrackPlayback } from '@/lib/useTrackPlayback';
 import type { ArrangementData } from '@/lib/supabase/types';
 import type { User } from '@supabase/supabase-js';
@@ -35,7 +36,10 @@ interface Props {
 
 export default function LeaderboardClient({ rankings, user, myProfile, votesRequired: voteThreshold }: Props) {
   const [activeRowId, setActiveRowId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const total = rankings.length;
+
+  const toggleExpand = (id: string) => setExpandedId((prev) => (prev === id ? null : id));
 
   return (
     <div
@@ -75,54 +79,18 @@ export default function LeaderboardClient({ rankings, user, myProfile, votesRequ
             <span className="lb-col-tier">TIER</span>
           </div>
 
-          {rankings.map((p, i) => {
-            const { label, color } = tierLabel(p.elo_rating);
-            const isMe = user?.id === p.id;
-            const isPodium = i < 3;
-            const medalBg = isPodium ? MEDAL_BG[i] : null;
-
-            return (
-              <div
-                key={p.id}
-                className={`lb-row${isPodium ? ' lb-row-podium' : ''}`}
-                style={{
-                  borderBottom: '2px solid var(--bd-ink)',
-                  background: isMe ? 'var(--bd-ink)' : medalBg ?? (i % 2 === 0 ? 'var(--bd-bg)' : 'var(--bd-bg-alt)'),
-                  color: isMe ? 'var(--bd-on-ink)' : medalBg ? '#000' : 'var(--bd-ink)',
-                  fontSize: 11,
-                  fontWeight: isPodium || isMe ? 700 : 400,
-                  borderLeft: isPodium ? `5px solid ${MEDAL_BG[i]}` : isMe ? '5px solid var(--bd-ink)' : '5px solid transparent',
-                }}
-              >
-                <span className="lb-col-num" style={{ fontSize: isPodium ? 14 : 11 }}>
-                  {isPodium ? MEDALS[i] : i + 1}
-                </span>
-                <RowPlayButton
-                  rowId={p.id}
-                  track={p.track}
-                  isActiveRow={activeRowId === p.id}
-                  onActivate={() => setActiveRowId(p.id)}
-                />
-                <span className="lb-col-producer">
-                  {p.username ?? 'ANONYMOUS'}{isMe ? ' ←' : ''}
-                </span>
-                <span className="lb-col-elo" style={{ fontSize: isPodium ? 13 : 11 }}>
-                  {p.elo_rating}
-                </span>
-                <span className="lb-col-won" style={{ color: isMe ? 'var(--bd-on-ink-muted)' : medalBg ? '#666' : 'var(--bd-muted)' }}>
-                  {p.votes_received}
-                </span>
-                <span className="lb-col-tier">
-                  <span style={{
-                    background: color, color: '#000',
-                    padding: '2px 7px', fontSize: 8, fontWeight: 900, letterSpacing: 1,
-                  }}>
-                    {label}
-                  </span>
-                </span>
-              </div>
-            );
-          })}
+          {rankings.map((p, i) => (
+            <LeaderboardRow
+              key={p.id}
+              p={p}
+              index={i}
+              isMe={user?.id === p.id}
+              isActiveRow={activeRowId === p.id}
+              expanded={expandedId === p.id}
+              onPlayActivate={() => setActiveRowId(p.id)}
+              onToggleExpand={() => toggleExpand(p.id)}
+            />
+          ))}
 
           {rankings.length === 0 && (
             <div style={{ padding: '64px 32px', textAlign: 'center', fontSize: 11, color: 'var(--bd-muted)', letterSpacing: 2 }}>
@@ -136,24 +104,95 @@ export default function LeaderboardClient({ rankings, user, myProfile, votesRequ
   );
 }
 
-function RowPlayButton({ track, isActiveRow, onActivate }: {
-  rowId: string;
-  track: { title: string; arrangement: ArrangementData } | null;
+function LeaderboardRow({ p, index, isMe, isActiveRow, expanded, onPlayActivate, onToggleExpand }: {
+  p: RankingRow;
+  index: number;
+  isMe: boolean;
   isActiveRow: boolean;
-  onActivate: () => void;
+  expanded: boolean;
+  onPlayActivate: () => void;
+  onToggleExpand: () => void;
 }) {
-  const { playing, toggle, stop } = useTrackPlayback(track?.arrangement ?? null);
+  const { label, color } = tierLabel(p.elo_rating);
+  const isPodium = index < 3;
+  const medalBg = isPodium ? MEDAL_BG[index] : null;
+  const hasTrack = !!p.track;
+  const { playing, currentSec, toggle, stop } = useTrackPlayback(p.track?.arrangement ?? null);
 
   // Another row became active — stop this one so only one track plays at a time.
   useEffect(() => {
     if (!isActiveRow && playing) stop();
   }, [isActiveRow, playing, stop]);
 
+  const chevronColor = isMe ? 'var(--bd-on-ink-muted)' : medalBg ? '#666' : 'var(--bd-faint)';
+
+  return (
+    <>
+      <div
+        className={`lb-row${isPodium ? ' lb-row-podium' : ''}${hasTrack ? ' lb-row-clickable' : ''}`}
+        onClick={hasTrack ? onToggleExpand : undefined}
+        onKeyDown={hasTrack ? (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onToggleExpand(); } : undefined}
+        aria-expanded={hasTrack ? expanded : undefined}
+        tabIndex={hasTrack ? 0 : undefined}
+        style={{
+          borderBottom: '2px solid var(--bd-ink)',
+          background: isMe ? 'var(--bd-ink)' : medalBg ?? (index % 2 === 0 ? 'var(--bd-bg)' : 'var(--bd-bg-alt)'),
+          color: isMe ? 'var(--bd-on-ink)' : medalBg ? '#000' : 'var(--bd-ink)',
+          fontSize: 11,
+          fontWeight: isPodium || isMe ? 700 : 400,
+          borderLeft: isPodium ? `5px solid ${MEDAL_BG[index]}` : isMe ? '5px solid var(--bd-ink)' : '5px solid transparent',
+        }}
+      >
+        <span className="lb-col-num" style={{ fontSize: isPodium ? 14 : 11 }}>
+          {isPodium ? MEDALS[index] : index + 1}
+        </span>
+        <RowPlayButton
+          track={p.track}
+          playing={playing}
+          onToggle={(e) => { e.stopPropagation(); if (!playing) onPlayActivate(); toggle(); }}
+        />
+        <span className="lb-col-producer">
+          {hasTrack && <span className="lb-chevron" style={{ color: chevronColor }} aria-hidden>{expanded ? '▾ ' : '▸ '}</span>}
+          {p.username ?? 'ANONYMOUS'}{isMe ? ' ←' : ''}
+        </span>
+        <span className="lb-col-elo" style={{ fontSize: isPodium ? 13 : 11 }}>
+          {p.elo_rating}
+        </span>
+        <span className="lb-col-won" style={{ color: isMe ? 'var(--bd-on-ink-muted)' : medalBg ? '#666' : 'var(--bd-muted)' }}>
+          {p.votes_received}
+        </span>
+        <span className="lb-col-tier">
+          <span style={{
+            background: color, color: '#000',
+            padding: '2px 7px', fontSize: 8, fontWeight: 900, letterSpacing: 1,
+          }}>
+            {label}
+          </span>
+        </span>
+      </div>
+
+      {expanded && p.track && (
+        <div className="lb-expand">
+          <div className="lb-expand-head">
+            TRACK · <strong>{p.track.title}</strong>
+          </div>
+          <SequencerPreview arrangement={p.track.arrangement} currentSec={currentSec} playing={playing} />
+        </div>
+      )}
+    </>
+  );
+}
+
+function RowPlayButton({ track, playing, onToggle }: {
+  track: { title: string; arrangement: ArrangementData } | null;
+  playing: boolean;
+  onToggle: (e: React.MouseEvent) => void;
+}) {
   if (!track) return <span className="lb-play lb-play-empty" aria-hidden />;
 
   return (
     <button
-      onClick={() => { if (!playing) onActivate(); toggle(); }}
+      onClick={onToggle}
       className={`lb-play${playing ? ' playing' : ''}`}
       aria-label={playing ? `Stop ${track.title}` : `Play ${track.title}`}
       title={playing ? `Stop ${track.title}` : `Play ${track.title}`}

@@ -73,7 +73,7 @@ Timeline stores `{ patternId, moduleType, startSec, durationSec }` — ID refere
 | `app/page.tsx` | Studio (client-only, BeatdownShell dynamic import) |
 | `app/layout.tsx` | Root layout — `data-theme` attribute + pre-paint theme script (no flash) |
 | `app/arena/page.tsx` + `ArenaClient.tsx` | Arena — How It Works card, match cards, voting, vote bar, matchmaker |
-| `app/leaderboard/page.tsx` + `LeaderboardClient.tsx` | ELO leaderboard — podium, stats, tier badges, per-row track playback, **WON** column (arena votes received) |
+| `app/leaderboard/page.tsx` + `LeaderboardClient.tsx` | ELO leaderboard — podium, stats, tier badges, per-row track playback, collapsible rows that expand into a live sequencer preview (`SequencerPreview`), **WON** column (arena votes received) |
 | `scripts/seed-bot.ts` | Seeds all 4 bot users/submissions (reads `.env.local`, update-in-place; does not reset ELO/stats on re-run) |
 | `scripts/bootstrap-arena.ts` | Seeds bots, clears resolved matches in open round, ELO-pairs unmatched subs into active battles |
 | `scripts/repair-profile-stats.ts` | Syncs `submissions_count` + `votes_cast` from source tables after bot re-seeds |
