@@ -152,7 +152,18 @@ function LeaderboardRow({ p, index, isMe, isActiveRow, expanded, onPlayActivate,
           onToggle={(e) => { e.stopPropagation(); if (!playing) onPlayActivate(); toggle(); }}
         />
         <span className="lb-col-producer">
-          {hasTrack && <span className="lb-chevron" style={{ color: chevronColor }} aria-hidden>{expanded ? '▾ ' : '▸ '}</span>}
+          {hasTrack && (
+            <span className="lb-chevron" style={{ color: chevronColor }} aria-hidden>
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 10 10"
+                style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
+              >
+                <path d="M3 2 L7 5 L3 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+              </svg>
+            </span>
+          )}
           {p.username ?? 'ANONYMOUS'}{isMe ? ' ←' : ''}
         </span>
         <span className="lb-col-elo" style={{ fontSize: isPodium ? 13 : 11 }}>
