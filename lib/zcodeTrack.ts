@@ -284,11 +284,11 @@ const FORK_GRIDS: Record<ModuleType, Grid> = {
 };
 
 const FORK_MODULE_SETTINGS: Record<ModuleType, ModuleSettings> = {
-  drum:  { volume: 0.8,  cutoff: 0.85, decay: 0.1,  attack: 0.01, res: 0.1,  pan: 0.5 },
-  bass:  { volume: 0.8,  cutoff: 0.22, decay: 0.55, attack: 0.02, res: 0.35, pan: 0.5 },
-  pad:   { volume: 0.5,  cutoff: 0.42, decay: 0.95, attack: 0.6,  res: 0.05, pan: 0.4 },
-  synth: { volume: 0.58, cutoff: 0.8,  decay: 0.32, attack: 0.03, res: 0.2,  pan: 0.6 },
-  arp:   { volume: 0.36, cutoff: 0.92, decay: 0.12, attack: 0.01, res: 0.32, pan: 0.72 },
+  drum:  { volume: 0.88, cutoff: 0.85, decay: 0.1,  attack: 0.01, res: 0.1,  pan: 0.5 },
+  bass:  { volume: 0.66, cutoff: 0.22, decay: 0.55, attack: 0.02, res: 0.35, pan: 0.5 },
+  pad:   { volume: 0.48, cutoff: 0.42, decay: 0.95, attack: 0.6,  res: 0.05, pan: 0.4 },
+  synth: { volume: 0.68, cutoff: 0.8,  decay: 0.32, attack: 0.03, res: 0.2,  pan: 0.6 },
+  arp:   { volume: 0.52, cutoff: 0.92, decay: 0.12, attack: 0.01, res: 0.32, pan: 0.72 },
 };
 
 export const ZCODE_TRACK = {
