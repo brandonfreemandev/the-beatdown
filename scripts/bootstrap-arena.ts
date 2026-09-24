@@ -35,7 +35,7 @@ const BOTS: Bot[] = [
   { email: 'neon-drift@thebeatdown.bot', name: 'Neon Drift', title: 'Neon Drift', arrangement: SPARK_TRACK },
   { email: 'gridlock@thebeatdown.bot', name: 'Gridlock', title: 'Concrete Floors (Gridlock)', arrangement: DEMO_TRACK },
   { email: 'pulse-unit@thebeatdown.bot', name: 'Pulse Unit', title: 'Afterimage (Pulse Unit)', arrangement: { ...SONNET_TRACK, bpm: 128 } },
-  { email: 'zcode-glm@thebeatdown.bot', name: 'ZCode GLM 5.3', title: 'Ship It (ZCode GLM 5.3)', arrangement: ZCODE_TRACK },
+  { email: 'zcode-glm@thebeatdown.bot', name: 'ZCode GLM 5.3', title: 'Fork (ZCode GLM 5.3)', arrangement: ZCODE_TRACK },
 ];
 
 async function getOrCreateBotUserId(bot: Bot): Promise<string> {

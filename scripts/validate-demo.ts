@@ -43,7 +43,8 @@ function validate(name: string, track: Track): string[] {
     for (let i = 1; i < blocks.length; i++) {
       const prev = blocks[i - 1];
       const cur = blocks[i];
-      if (cur.startSec < prev.startSec + prev.durationSec) {
+      // 1ms tolerance: non-integer BPMs (e.g. 140 → 3.42857s blocks) accrue float dust
+      if (cur.startSec < prev.startSec + prev.durationSec - 0.001) {
         errors.push(`${m} blocks overlap: ${prev.id} and ${cur.id}`);
       }
     }
