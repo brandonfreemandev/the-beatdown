@@ -111,6 +111,9 @@ Key logic:
 
 ## Gatekeeper UX
 
+**⏸ Temporarily disabled for onboarding** — `GATEKEEPER_ENABLED = false` in `lib/gatekeeper.ts`
+(submit open to everyone, gate UI hidden). To reinstate: flip it to `true` and `npm run deploy`.
+
 The vote requirement is surfaced in two places so users aren't surprised:
 
 1. **SUBMIT TRACK item** in the ProfileButton dropdown — goes grey with a `VOTE n/m FIRST TO UNLOCK` sub-label when `votesCast < votesRequired(entry_count)`. Threshold fetched from open round in BeatdownShell / SiteNav.

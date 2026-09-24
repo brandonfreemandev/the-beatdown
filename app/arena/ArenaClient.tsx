@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ArenaPlayer from '@/components/ArenaPlayer';
 import SiteNav from '@/components/SiteNav';
+import { GATEKEEPER_ENABLED } from '@/lib/gatekeeper';
 import type { Profile, ArrangementData } from '@/lib/supabase/types';
 import type { User } from '@supabase/supabase-js';
 
@@ -28,7 +29,9 @@ const TRACK_COLORS = { a: '#74b9f3', b: '#ffb300' };
 
 const HOW_IT_WORKS = (voteThreshold: number) => [
   { step: '1 · MAKE',    desc: 'Compose a beat in the Studio using all 5 modules.' },
-  { step: '2 · VOTE',    desc: `Vote in ${voteThreshold} Arena battle${voteThreshold !== 1 ? 's' : ''} to unlock Submit.` },
+  { step: '2 · VOTE',    desc: GATEKEEPER_ENABLED
+      ? `Vote in ${voteThreshold} Arena battle${voteThreshold !== 1 ? 's' : ''} to unlock Submit.`
+      : 'While we onboard: vote on battles you like — no requirement right now.' },
   { step: '3 · SUBMIT',  desc: 'Head to Studio, hit SUBMIT, give your track a title.' },
   { step: '4 · WIN ELO', desc: "You're paired blind. After 3 votes the winner gains ELO." },
 ];
