@@ -1,7 +1,7 @@
 # The Beatdown — Agent Handoff
 
 **Last updated:** 2026-09-24  
-**Status:** MVP live on Cloudflare Workers (via OpenNext). Arena bootstrapped with 6 bot tracks, gatekeeper v2 (capped at 3 votes, aware of active battles), auto-pairing after submit/resolve, leaderboard dedupe, hardened OAuth callback. Hosting docs: `docs/deploy-cloudflare.md`.
+**Status:** MVP live on Cloudflare Workers (via OpenNext). Arena bootstrapped with 7 bot tracks, gatekeeper v2 (capped at 3 votes, aware of active battles), auto-pairing after submit/resolve, leaderboard dedupe, hardened OAuth callback. Hosting docs: `docs/deploy-cloudflare.md`.
 
 ---
 
@@ -103,7 +103,7 @@ Key logic:
 - `handle_new_user()` trigger — creates profile on auth.users insert (may not fire on OAuth; `ensureProfile()` in vote + submit routes)
 - **Gatekeeper** — user must cast `votesRequired(entry_count, active_battles)` votes before submitting: `min(ceil(entry_count / 2), 3, active_battles)`; 0 when no active battles exist. Wired via `lib/gatekeeper.ts` in SiteNav, BeatdownShell, Arena, Leaderboard, and submit API. Active-battle count is a `matches` head-count query (`status = 'active'`) on Arena, Leaderboard, BeatdownShell (global) and submit API (round-scoped).
 - **Auto-pairing** — `lib/pairUnmatched.ts` runs after every submission and after match auto-resolve, so freed tracks re-enter the pool without running the matchmaker by hand.
-- **Bootstrap** — `scripts/bootstrap-arena.ts` seeds **six** bots (→ three active battles) and reports the same capped gatekeeper number.
+- **Bootstrap** — `scripts/bootstrap-arena.ts` seeds **seven** bots and reports the same capped gatekeeper number.
 - **Auto-resolve** — vote route re-reads match counts after insert, then calls `resolve_match()` once total votes ≥ 3 with a clear leader
 - **Service client** — `createServiceClient()` uses `@supabase/supabase-js` directly (SSR wrapper blocked profile writes)
 

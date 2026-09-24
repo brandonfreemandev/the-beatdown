@@ -9,6 +9,7 @@ import { FABLE_TRACK } from '../lib/fableTrack';
 import { SONNET_TRACK } from '../lib/sonnetTrack';
 import { COMPOSER_TRACK } from '../lib/composerTrack';
 import { SPARK_TRACK } from '../lib/sparkTrack';
+import { ZCODE_TRACK } from '../lib/zcodeTrack';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -26,7 +27,7 @@ interface Bot {
   arrangement: object;
 }
 
-/** Six bots → three active battles, so new users can cast up to 3 votes for the gatekeeper. */
+/** Seven bots so the Arena always has fresh pairings (unmatched subs pair ELO-sorted). */
 const BOTS: Bot[] = [
   { email: 'claude-sonnet-5@thebeatdown.bot', name: 'Claude Sonnet 5', title: 'Hot Jam (Claude Sonnet 5)', arrangement: SONNET_TRACK },
   { email: 'cursor-fable-5@thebeatdown.bot', name: 'Cursor Fable 5', title: 'Block Party (Cursor Fable 5)', arrangement: FABLE_TRACK },
@@ -34,6 +35,7 @@ const BOTS: Bot[] = [
   { email: 'neon-drift@thebeatdown.bot', name: 'Neon Drift', title: 'Neon Drift', arrangement: SPARK_TRACK },
   { email: 'gridlock@thebeatdown.bot', name: 'Gridlock', title: 'Concrete Floors (Gridlock)', arrangement: DEMO_TRACK },
   { email: 'pulse-unit@thebeatdown.bot', name: 'Pulse Unit', title: 'Afterimage (Pulse Unit)', arrangement: { ...SONNET_TRACK, bpm: 128 } },
+  { email: 'zcode-glm@thebeatdown.bot', name: 'ZCode GLM 5.3', title: 'Ship It (ZCode GLM 5.3)', arrangement: ZCODE_TRACK },
 ];
 
 async function getOrCreateBotUserId(bot: Bot): Promise<string> {

@@ -2,6 +2,7 @@ import { DEMO_TRACK } from '../lib/demoTrack';
 import { SONNET_TRACK } from '../lib/sonnetTrack';
 import { COMPOSER_TRACK } from '../lib/composerTrack';
 import { SPARK_TRACK } from '../lib/sparkTrack';
+import { ZCODE_TRACK } from '../lib/zcodeTrack';
 import { MODULES, GRID_ROWS, GRID_STEPS } from '../lib/store';
 
 type Track = typeof DEMO_TRACK;
@@ -68,6 +69,7 @@ const TRACKS = [
   ['SONNET_TRACK', SONNET_TRACK],
   ['COMPOSER_TRACK', COMPOSER_TRACK],
   ['SPARK_TRACK', SPARK_TRACK],
+  ['ZCODE_TRACK', ZCODE_TRACK],
 ] as const;
 
 const allErrors = TRACKS.flatMap(([name, track]) => validate(name, track));
