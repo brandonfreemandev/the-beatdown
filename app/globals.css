@@ -180,6 +180,25 @@
   background: var(--bd-bg);
   align-items: center;
 }
+.controls-knobs {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+}
+.rotary-knob { width: 56px; overflow: visible; }
+.rotary-knob svg { width: 48px; height: 48px; display: block; overflow: visible; }
+.rotary-knob-label {
+  font-size: 9px;
+  font-family: monospace;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--bd-ink);
+  text-align: center;
+  max-width: 100%;
+}
 .controls-play-bpm {
   margin-left: auto;
   display: flex;
@@ -352,6 +371,34 @@
 }
 .lb-play.playing { background: var(--bd-ink); color: var(--bd-on-ink); }
 .lb-play svg { display: block; }
+.lb-play-empty { visibility: hidden; pointer-events: none; }
+
+/* Leaderboard table — desktop grid; mobile overrides below */
+.lb-page { max-width: 720px; margin: 0 auto; padding: 32px 24px 64px; }
+.lb-stats { display: flex; border: 3px solid var(--bd-ink); margin-bottom: 32px; }
+.lb-stat { flex: 1; padding: 14px 20px; display: flex; flex-direction: column; gap: 4px; border-right: 3px solid var(--bd-ink); }
+.lb-stat:last-child { border-right: none; }
+.lb-table { border: 3px solid var(--bd-ink); }
+.lb-row {
+  display: grid;
+  grid-template-columns: 52px 40px minmax(0, 1fr) 72px 56px 96px;
+  align-items: center;
+  padding: 8px 16px;
+}
+.lb-row-head {
+  background: var(--bd-ink);
+  color: var(--bd-on-ink);
+  padding: 10px 16px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+.lb-row-podium { padding-top: 10px; padding-bottom: 10px; }
+.lb-col-num { font-weight: 900; }
+.lb-col-producer { letter-spacing: 1px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-col-elo { text-align: right; font-weight: 900; }
+.lb-col-won { text-align: right; }
+.lb-col-tier { text-align: right; }
 
 /* Arena / Leaderboard — nav stays pinned; match list scrolls inside the viewport */
 .page-shell {
@@ -474,7 +521,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
+    width: 18px;
     flex-shrink: 0;
     border-right: 3px solid var(--bd-ink);
     background: var(--bd-bg);
@@ -484,27 +531,72 @@
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     font-family: monospace;
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: 0;
     white-space: nowrap;
     color: var(--bd-ink);
   }
 
-  /* Controls: wrap, center knobs and play/bpm groups */
+  /* Controls: one compact knob row + transport below — frees vertical space for the grid */
   .controls-row {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 10px;
-    justify-content: center;
+    flex-direction: column;
+    gap: 0;
+    padding: 6px 6px 0;
+    align-items: stretch;
+  }
+  .controls-knobs {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 6px 6px;
+    overflow: visible;
+  }
+  .rotary-knob {
+    width: 100% !important;
+    min-width: 0;
+    overflow: visible;
+  }
+  .rotary-knob svg {
+    width: 100%;
+    max-width: 40px;
+    height: auto;
+    aspect-ratio: 1;
+    display: block;
+    margin: 0 auto;
+    overflow: visible;
+  }
+  .rotary-knob-label {
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .controls-play-bpm {
     margin-left: 0;
-    flex-basis: 100%;
-    padding-top: 4px;
+    flex-basis: auto;
+    width: 100%;
+    padding: 6px 0 8px;
     border-top: 1px solid var(--bd-line);
     justify-content: center;
   }
+
+  /* Leaderboard — fit 360px CSS width; hide tier badge column */
+  .lb-page { padding: 16px 8px 48px; }
+  .lb-stat { padding: 10px 8px; }
+  .lb-stat-value { font-size: 18px !important; }
+  .lb-row,
+  .lb-row-head {
+    grid-template-columns: 28px 32px minmax(0, 1fr) 44px 36px;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 10px;
+  }
+  .lb-col-tier { display: none; }
 }
 
 html, body {

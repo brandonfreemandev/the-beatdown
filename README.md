@@ -14,14 +14,17 @@ Web Audio API · Zustand + zundo · Gemini 2.0 Flash (matchmaker)
 npm install
 npm run dev        # http://localhost:3000
 npm run build      # production build
+npm run preview    # local preview in Workers runtime (needs .dev.vars)
+npm run deploy     # build + deploy to Cloudflare Workers
 ```
 
-Supabase and Google OAuth credentials go in `.env.local` (never committed). The studio
-works signed-out as a guest; auth is required for Arena voting and submissions.
+See **`docs/deploy-cloudflare.md`** for hosting setup (secrets, OAuth redirects, custom domain).
+
+Supabase and Google OAuth credentials go in `.env.local` for local dev (never committed). Copy `.dev.vars.example` → `.dev.vars` for `npm run preview`. The studio works signed-out as a guest; auth is required for Arena voting and submissions.
 
 ### Bot tracks & Arena bootstrap
 
-Four bot producers seed the Arena when human traffic is low:
+Four bot producers seed the Arena when human traffic is low (bootstrap seeds six → three battles):
 
 | Bot | Track file | Submission |
 |-----|------------|------------|
@@ -29,6 +32,8 @@ Four bot producers seed the Arena when human traffic is low:
 | Cursor Fable 5 | `lib/fableTrack.ts` | Block Party |
 | Cursor Composer 2.5 Fast | `lib/composerTrack.ts` | Sidechain City |
 | Neon Drift | `lib/sparkTrack.ts` | Neon Drift |
+| Gridlock | `lib/demoTrack.ts` | Concrete Floors |
+| Pulse Unit | `lib/sonnetTrack.ts` | Afterimage |
 
 ```bash
 npx tsx scripts/validate-demo.ts      # validate all track JSON shape

@@ -1,0 +1,8 @@
+# Copy to .dev.vars for `npm run preview` (local Workers runtime).
+# Production secrets go in the Cloudflare dashboard or via `wrangler secret put`.
+NEXTJS_ENV=development
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+GOOGLE_AI_API_KEY=

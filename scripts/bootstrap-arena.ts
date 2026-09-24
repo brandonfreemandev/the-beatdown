@@ -26,11 +26,14 @@ interface Bot {
   arrangement: object;
 }
 
+/** Six bots → three active battles, so new users can cast up to 3 votes for the gatekeeper. */
 const BOTS: Bot[] = [
   { email: 'claude-sonnet-5@thebeatdown.bot', name: 'Claude Sonnet 5', title: 'Hot Jam (Claude Sonnet 5)', arrangement: SONNET_TRACK },
   { email: 'cursor-fable-5@thebeatdown.bot', name: 'Cursor Fable 5', title: 'Block Party (Cursor Fable 5)', arrangement: FABLE_TRACK },
   { email: 'cursor-composer-2.5@thebeatdown.bot', name: 'Cursor Composer 2.5 Fast', title: 'Sidechain City (Composer 2.5 Fast)', arrangement: COMPOSER_TRACK },
   { email: 'neon-drift@thebeatdown.bot', name: 'Neon Drift', title: 'Neon Drift', arrangement: SPARK_TRACK },
+  { email: 'gridlock@thebeatdown.bot', name: 'Gridlock', title: 'Concrete Floors (Gridlock)', arrangement: DEMO_TRACK },
+  { email: 'pulse-unit@thebeatdown.bot', name: 'Pulse Unit', title: 'Afterimage (Pulse Unit)', arrangement: { ...SONNET_TRACK, bpm: 128 } },
 ];
 
 async function getOrCreateBotUserId(bot: Bot): Promise<string> {
@@ -99,7 +102,7 @@ async function main() {
   }
 
   const { data: matched } = await supabase
-    .from('matches').select('track_a_id, track_b_id').eq('round_id', round.id);
+    .from('matches').select('track_a_id, track_b_id').eq('round_id', round.id).eq('status', 'active');
   const matchedIds = new Set((matched ?? []).flatMap((m) => [m.track_a_id, m.track_b_id]));
 
   const { data: subs } = await supabase
@@ -136,8 +139,10 @@ async function main() {
   }
 
   const { data: roundAfter } = await supabase.from('rounds').select('entry_count').eq('id', round.id).single();
-  console.log(`\nDone — ${created} active battle(s). Round entry_count: ${roundAfter?.entry_count ?? '?'}`);
-  console.log(`Gatekeeper unlock: ${Math.ceil((roundAfter?.entry_count ?? 0) / 2)} vote(s) cast`);
+  const { count: activeCount } = await supabase.from('matches').select('id', { count: 'exact', head: true }).eq('round_id', round.id).eq('status', 'active');
+  const gate = Math.min(Math.ceil((roundAfter?.entry_count ?? 0) / 2), 3, activeCount ?? 0);
+  console.log(`\nDone — ${created} new battle(s), ${activeCount ?? 0} active total. Round entry_count: ${roundAfter?.entry_count ?? '?'}`);
+  console.log(`Gatekeeper unlock: ${gate} vote(s) cast`);
 }
 
 main();

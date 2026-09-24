@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useStore } from '@/lib/store';
+import { signInWithGoogle } from '@/lib/authSignIn';
 import type { User } from '@supabase/supabase-js';
 
 interface Props {
@@ -16,11 +17,9 @@ export default function SubmitModal({ user, onClose }: Props) {
   const [errorMsg, setErrorMsg] = useState('');
   const supabase = createClient();
 
-  const signIn = () => {
-    supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${location.origin}/auth/callback` },
-    });
+  const signIn = async () => {
+    const err = await signInWithGoogle(supabase);
+    if (err) alert(err);
   };
 
   const submit = async () => {
@@ -91,7 +90,7 @@ export default function SubmitModal({ user, onClose }: Props) {
             <>
               <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>GATEKEEPER</p>
               <p style={{ fontSize: 12, lineHeight: 1.7, marginBottom: 16, color: 'var(--bd-body)' }}>
-                You need to vote on <strong>{gateInfo.required - gateInfo.cast}</strong> more track{gateInfo.required - gateInfo.cast !== 1 ? 's' : ''} before you can submit.
+                You need to vote in <strong>{gateInfo.required - gateInfo.cast}</strong> more Arena battle{gateInfo.required - gateInfo.cast !== 1 ? 's' : ''} before you can submit.
                 <br />
                 Head to the Arena and cast your votes first.
               </p>

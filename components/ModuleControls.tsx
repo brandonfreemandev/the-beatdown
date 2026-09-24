@@ -99,12 +99,14 @@ export default function ModuleControls({ module, playhead, isPlaying, onTogglePl
     <div className="mc-root">
       {/* Knob row */}
       <div className="controls-row">
-        <RotaryKnob label="VOL"    value={volume} onChange={handleVolume} color={color} defaultValue={0.7} />
-        <RotaryKnob label="CUTOFF" value={cutoff} onChange={handleCutoff} color={color} defaultValue={0.8} />
-        <RotaryKnob label="DECAY"  value={decay}  onChange={handleDecay}  color={color} defaultValue={0.3} />
-        <RotaryKnob label="ATTACK" value={attack} onChange={handleAttack} color={color} defaultValue={0.05} />
-        <RotaryKnob label="RES"    value={res}    onChange={handleRes}    color={color} defaultValue={0.05} />
-        <RotaryKnob label="PAN"    value={pan}    onChange={handlePan}    color={color} defaultValue={0.5} />
+        <div className="controls-knobs">
+          <RotaryKnob label="VOL"    value={volume} onChange={handleVolume} color={color} defaultValue={0.7} />
+          <RotaryKnob label="CUTOFF" value={cutoff} onChange={handleCutoff} color={color} defaultValue={0.8} />
+          <RotaryKnob label="DECAY"  value={decay}  onChange={handleDecay}  color={color} defaultValue={0.3} />
+          <RotaryKnob label="ATTACK" value={attack} onChange={handleAttack} color={color} defaultValue={0.05} />
+          <RotaryKnob label="RES"    value={res}    onChange={handleRes}    color={color} defaultValue={0.05} />
+          <RotaryKnob label="PAN"    value={pan}    onChange={handlePan}    color={color} defaultValue={0.5} />
+        </div>
 
         {/* Play + BPM + Vault */}
         <div className="controls-play-bpm">

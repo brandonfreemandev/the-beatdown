@@ -19,7 +19,8 @@ export async function POST() {
   const { data: matched } = await service
     .from('matches')
     .select('track_a_id, track_b_id')
-    .eq('round_id', round.id) as { data: Pick<Match, 'track_a_id' | 'track_b_id'>[] | null; error: unknown };
+    .eq('round_id', round.id)
+    .eq('status', 'active') as { data: Pick<Match, 'track_a_id' | 'track_b_id'>[] | null; error: unknown };
 
   const matchedIds = new Set(
     (matched ?? []).flatMap((m) => [m.track_a_id, m.track_b_id])

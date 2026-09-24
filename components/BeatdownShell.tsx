@@ -37,8 +37,10 @@ export default function BeatdownShell() {
       const { data } = await supabase.auth.getUser();
       setUser(data.user);
       if (data.user) await loadProfile(data.user.id);
-      const { data: round } = await supabase.from('rounds').select('entry_count').eq('status', 'open').order('started_at', { ascending: false }).limit(1).maybeSingle();
-      if (round) setVotesRequiredCount(votesRequired(round.entry_count));
+      const { data: round } = await supabase.from('rounds').select('entry_count').eq('status', 'open').order('started_at', { ascending: false }).limit(1).maybeSingle() as { data: { entry_count: number } | null };
+      const { count: activeBattles } = await supabase.from('matches').select('id', { count: 'exact', head: true }).eq('status', 'active');
+      if (round) setVotesRequiredCount(votesRequired(round.entry_count, activeBattles ?? 0));
+      else setVotesRequiredCount(votesRequired(4, activeBattles ?? 0));
     };
     loadUser();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
@@ -50,7 +52,7 @@ export default function BeatdownShell() {
   }, []);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bd-bg)', borderLeft: '3px solid var(--bd-ink)', borderRight: '3px solid var(--bd-ink)', borderBottom: '3px solid var(--bd-ink)', overflow: 'hidden' }}>
+    <div style={{ width: '100%', maxWidth: '100%', height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bd-bg)', borderLeft: '3px solid var(--bd-ink)', borderRight: '3px solid var(--bd-ink)', borderBottom: '3px solid var(--bd-ink)', overflow: 'hidden' }}>
       <SiteNav
         currentPage="studio"
         onSubmit={() => setSubmitOpen(true)}

@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 
   if (total >= MIN_VOTES_TO_RESOLVE && votesA !== votesB) {
     const winnerId = votesA > votesB ? match.track_a_id : match.track_b_id;
-    const { error: resolveErr } = await service.rpc('resolve_match', {
+    const { error: resolveErr } = await (service.rpc as any)('resolve_match', {
       p_match_id: matchId,
       p_winner_id: winnerId,
     });
@@ -75,6 +75,9 @@ export async function POST(request: Request) {
       console.error('resolve_match failed:', resolveErr.message);
       return NextResponse.json({ error: resolveErr.message }, { status: 500 });
     }
+    // Freed tracks can re-enter the pool — refill active battles
+    const { pairOpenRound } = await import('@/lib/pairUnmatched');
+    await pairOpenRound(service).catch((e) => console.error('Post-resolve pairing failed:', e));
     return NextResponse.json({ ok: true, resolved: true, winnerId });
   }
 

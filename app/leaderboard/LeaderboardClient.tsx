@@ -49,39 +49,30 @@ export default function LeaderboardClient({ rankings, user, myProfile, votesRequ
         style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}
       >
 
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px 64px' }}>
+      <div className="lb-page">
 
         {/* Stats header */}
-        <div style={{ display: 'flex', border: '3px solid var(--bd-ink)', marginBottom: 32 }}>
+        <div className="lb-stats">
           {[
             { label: 'PRODUCERS', value: total },
             { label: 'TOP ELO', value: rankings[0]?.elo_rating ?? '—' },
             { label: 'FLOOR ELO', value: rankings[total - 1]?.elo_rating ?? '—' },
-          ].map(({ label, value }, i) => (
-            <div key={label} style={{
-              flex: 1, padding: '14px 20px',
-              borderRight: i < 2 ? '3px solid var(--bd-ink)' : 'none',
-              display: 'flex', flexDirection: 'column', gap: 4,
-            }}>
+          ].map(({ label, value }) => (
+            <div key={label} className="lb-stat">
               <div style={{ fontSize: 8, letterSpacing: 2, color: 'var(--bd-muted)', fontWeight: 700 }}>{label}</div>
-              <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1 }}>{value}</div>
+              <div className="lb-stat-value" style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1 }}>{value}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ border: '3px solid var(--bd-ink)' }}>
-          {/* Column header */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: '52px 40px 1fr 90px 80px 110px',
-            background: 'var(--bd-ink)', color: 'var(--bd-on-ink)',
-            padding: '10px 16px', fontSize: 9, letterSpacing: 2, fontWeight: 700,
-          }}>
-            <span>RANK</span>
+        <div className="lb-table">
+          <div className="lb-row lb-row-head">
+            <span className="lb-col-num">RANK</span>
             <span />
-            <span>PRODUCER</span>
-            <span style={{ textAlign: 'right' }}>ELO</span>
-            <span style={{ textAlign: 'right' }}>WON</span>
-            <span style={{ textAlign: 'right' }}>TIER</span>
+            <span className="lb-col-producer">PRODUCER</span>
+            <span className="lb-col-elo">ELO</span>
+            <span className="lb-col-won">WON</span>
+            <span className="lb-col-tier">TIER</span>
           </div>
 
           {rankings.map((p, i) => {
@@ -93,20 +84,17 @@ export default function LeaderboardClient({ rankings, user, myProfile, votesRequ
             return (
               <div
                 key={p.id}
+                className={`lb-row${isPodium ? ' lb-row-podium' : ''}`}
                 style={{
-                  display: 'grid', gridTemplateColumns: '52px 40px 1fr 90px 80px 110px',
-                  alignItems: 'center',
-                  padding: isPodium ? '10px 16px' : '8px 16px',
                   borderBottom: '2px solid var(--bd-ink)',
                   background: isMe ? 'var(--bd-ink)' : medalBg ?? (i % 2 === 0 ? 'var(--bd-bg)' : 'var(--bd-bg-alt)'),
-                  // Medal backgrounds are fixed accents — text on them stays literal black in both themes
                   color: isMe ? 'var(--bd-on-ink)' : medalBg ? '#000' : 'var(--bd-ink)',
                   fontSize: 11,
                   fontWeight: isPodium || isMe ? 700 : 400,
                   borderLeft: isPodium ? `5px solid ${MEDAL_BG[i]}` : isMe ? '5px solid var(--bd-ink)' : '5px solid transparent',
                 }}
               >
-                <span style={{ fontWeight: 900, fontSize: isPodium ? 14 : 11 }}>
+                <span className="lb-col-num" style={{ fontSize: isPodium ? 14 : 11 }}>
                   {isPodium ? MEDALS[i] : i + 1}
                 </span>
                 <RowPlayButton
@@ -115,16 +103,16 @@ export default function LeaderboardClient({ rankings, user, myProfile, votesRequ
                   isActiveRow={activeRowId === p.id}
                   onActivate={() => setActiveRowId(p.id)}
                 />
-                <span style={{ letterSpacing: 1 }}>
+                <span className="lb-col-producer">
                   {p.username ?? 'ANONYMOUS'}{isMe ? ' ←' : ''}
                 </span>
-                <span style={{ textAlign: 'right', fontWeight: 900, fontSize: isPodium ? 13 : 11 }}>
+                <span className="lb-col-elo" style={{ fontSize: isPodium ? 13 : 11 }}>
                   {p.elo_rating}
                 </span>
-                <span style={{ textAlign: 'right', color: isMe ? 'var(--bd-on-ink-muted)' : medalBg ? '#666' : 'var(--bd-muted)' }}>
+                <span className="lb-col-won" style={{ color: isMe ? 'var(--bd-on-ink-muted)' : medalBg ? '#666' : 'var(--bd-muted)' }}>
                   {p.votes_received}
                 </span>
-                <span style={{ textAlign: 'right' }}>
+                <span className="lb-col-tier">
                   <span style={{
                     background: color, color: '#000',
                     padding: '2px 7px', fontSize: 8, fontWeight: 900, letterSpacing: 1,
@@ -161,7 +149,7 @@ function RowPlayButton({ track, isActiveRow, onActivate }: {
     if (!isActiveRow && playing) stop();
   }, [isActiveRow, playing, stop]);
 
-  if (!track) return <span />;
+  if (!track) return <span className="lb-play lb-play-empty" aria-hidden />;
 
   return (
     <button

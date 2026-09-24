@@ -14,8 +14,27 @@ export interface Database {
           is_admin: boolean;
           created_at: string;
         };
-        Insert: Partial<Database['public']['Tables']['profiles']['Row']> & { id: string };
-        Update: Partial<Database['public']['Tables']['profiles']['Row']>;
+        Insert: {
+          id: string;
+          username?: string | null;
+          avatar_url?: string | null;
+          elo_rating?: number;
+          votes_cast?: number;
+          submissions_count?: number;
+          is_admin?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          username?: string | null;
+          avatar_url?: string | null;
+          elo_rating?: number;
+          votes_cast?: number;
+          submissions_count?: number;
+          is_admin?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       rounds: {
         Row: {
@@ -25,8 +44,21 @@ export interface Database {
           started_at: string;
           closed_at: string | null;
         };
-        Insert: Partial<Database['public']['Tables']['rounds']['Row']>;
-        Update: Partial<Database['public']['Tables']['rounds']['Row']>;
+        Insert: {
+          id?: string;
+          status?: 'open' | 'matching' | 'closed';
+          entry_count?: number;
+          started_at?: string;
+          closed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          status?: 'open' | 'matching' | 'closed';
+          entry_count?: number;
+          started_at?: string;
+          closed_at?: string | null;
+        };
+        Relationships: [];
       };
       submissions: {
         Row: {
@@ -37,8 +69,23 @@ export interface Database {
           arrangement: Json;
           created_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['submissions']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['submissions']['Row']>;
+        Insert: {
+          user_id: string;
+          round_id: string;
+          title: string;
+          arrangement: Json;
+          id?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          round_id?: string;
+          title?: string;
+          arrangement?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       matches: {
         Row: {
@@ -52,8 +99,29 @@ export interface Database {
           status: 'active' | 'resolved';
           created_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['matches']['Row'], 'id' | 'created_at' | 'winner_id' | 'votes_a' | 'votes_b' | 'status'>;
-        Update: Partial<Database['public']['Tables']['matches']['Row']>;
+        Insert: {
+          round_id: string;
+          track_a_id: string;
+          track_b_id: string;
+          id?: string;
+          winner_id?: string | null;
+          votes_a?: number;
+          votes_b?: number;
+          status?: 'active' | 'resolved';
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          round_id?: string;
+          track_a_id?: string;
+          track_b_id?: string;
+          winner_id?: string | null;
+          votes_a?: number;
+          votes_b?: number;
+          status?: 'active' | 'resolved';
+          created_at?: string;
+        };
+        Relationships: [];
       };
       votes: {
         Row: {
@@ -63,10 +131,21 @@ export interface Database {
           voted_for_id: string;
           created_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['votes']['Row'], 'id' | 'created_at'>;
+        Insert: {
+          user_id: string;
+          match_id: string;
+          voted_for_id: string;
+          id?: string;
+          created_at?: string;
+        };
         Update: never;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
 

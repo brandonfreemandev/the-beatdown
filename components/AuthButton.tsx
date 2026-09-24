@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { signInWithGoogle } from '@/lib/authSignIn';
 import type { User } from '@supabase/supabase-js';
 
 interface Props {
@@ -13,12 +14,11 @@ export default function AuthButton({ user }: Props) {
 
   const signIn = async () => {
     setLoading(true);
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${location.origin}/auth/callback`,
-      },
-    });
+    const err = await signInWithGoogle(supabase);
+    if (err) {
+      setLoading(false);
+      alert(err);
+    }
   };
 
   const signOut = async () => {

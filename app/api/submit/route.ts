@@ -37,8 +37,14 @@ export async function POST(request: Request) {
     .eq('id', user.id)
     .single() as { data: Pick<Profile, 'votes_cast'> | null; error: unknown };
 
-  const required = votesRequired(round.entry_count);
-  if (round.entry_count > 0 && (profile?.votes_cast ?? 0) < required) {
+  const { count: activeBattles } = await service
+    .from('matches')
+    .select('id', { count: 'exact', head: true })
+    .eq('round_id', round.id)
+    .eq('status', 'active');
+
+  const required = votesRequired(round.entry_count, activeBattles ?? 0);
+  if (required > 0 && (profile?.votes_cast ?? 0) < required) {
     return NextResponse.json(
       { error: 'GATEKEEPER', required, cast: profile?.votes_cast ?? 0 },
       { status: 403 }
@@ -52,5 +58,9 @@ export async function POST(request: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: (error as any).message }, { status: 500 });
+
+  const { pairOpenRound } = await import('@/lib/pairUnmatched');
+  await pairOpenRound(service).catch((e) => console.error('Post-submit pairing failed:', e));
+
   return NextResponse.json({ submission: data });
 }

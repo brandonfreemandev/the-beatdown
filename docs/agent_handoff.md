@@ -1,7 +1,7 @@
 # The Beatdown — Agent Handoff
 
-**Last updated:** 2026-07-03 (evening)  
-**Status:** MVP live. Arena bootstrapped with 4 bot tracks, vote/profile fixes, scrollable Arena/Leaderboard, dynamic gatekeeper, leaderboard WON column.
+**Last updated:** 2026-09-24  
+**Status:** MVP live on Cloudflare Workers (via OpenNext). Arena bootstrapped with 6 bot tracks, gatekeeper v2 (capped at 3 votes, aware of active battles), auto-pairing after submit/resolve, leaderboard dedupe, hardened OAuth callback. Hosting docs: `docs/deploy-cloudflare.md`.
 
 ---
 
@@ -53,7 +53,13 @@ Timeline stores `{ patternId, moduleType, startSec, durationSec }` — ID refere
 | `lib/fableTrack.ts` | Re-exports `DEMO_TRACK` for Cursor Fable 5's Arena submission |
 | `lib/composerTrack.ts` | Cursor Composer 2.5 Fast bot — "Sidechain City" (108 BPM, multi-pattern) |
 | `lib/sparkTrack.ts` | Neon Drift bot — "Neon Drift" (94 BPM lo-fi, 4th matchmaking entrant) |
-| `lib/gatekeeper.ts` | `votesRequired(entryCount)` — shared submit gate, mirrors submit API |
+| `lib/gatekeeper.ts` | `votesRequired(entryCount, activeBattleCount?)` — shared submit gate, mirrors submit API. Capped at 3 votes; when battle count is passed, never exceeds votable active battles (0 battles → 0 required) |
+| `lib/pairUnmatched.ts` | ELO-sorted pairing of unmatched submissions in the open round; called after submit + after match auto-resolve |
+| `lib/dedupeRankings.ts` | Collapses leaderboard rows sharing a display name (duplicate Google accounts); keeps best-scored row |
+| `lib/authSignIn.ts` | Google OAuth sign-in helper — validates public Supabase config, redirects via `authCallbackUrl()` |
+| `lib/siteUrl.ts` | `authCallbackUrl()` — browser origin on client, `NEXT_PUBLIC_SITE_URL` on server |
+| `middleware.ts` | Supabase session refresh. **Legacy `middleware` convention, kept intentionally** — OpenNext does not support Next 16 `proxy.ts` yet (build shows a deprecation warning; expected) |
+| `wrangler.jsonc` / `open-next.config.ts` | Cloudflare Workers config — see `docs/deploy-cloudflare.md` |
 | `lib/ensureProfile.ts` | Creates profile on first vote/submit if OAuth trigger missed; disambiguates duplicate display names |
 | `lib/useUndoShortcuts.ts` | Cmd/Ctrl+Z / Shift+Z undo/redo keyboard bindings |
 | `lib/supabase/types.ts` | All DB types — Profile, Round, Submission, Match, Vote, ArrangementData |
@@ -95,7 +101,9 @@ Key columns:
 Key logic:
 - `resolve_match(p_match_id, p_winner_id)` — Postgres fn, K=32 ELO, marks match resolved
 - `handle_new_user()` trigger — creates profile on auth.users insert (may not fire on OAuth; `ensureProfile()` in vote + submit routes)
-- **Gatekeeper** — user must cast `votesRequired(entry_count)` = `ceil(entry_count / 2)` votes before submitting. Wired via `lib/gatekeeper.ts` in SiteNav, BeatdownShell, Arena, Leaderboard, and submit API.
+- **Gatekeeper** — user must cast `votesRequired(entry_count, active_battles)` votes before submitting: `min(ceil(entry_count / 2), 3, active_battles)`; 0 when no active battles exist. Wired via `lib/gatekeeper.ts` in SiteNav, BeatdownShell, Arena, Leaderboard, and submit API. Active-battle count is a `matches` head-count query (`status = 'active'`) on Arena, Leaderboard, BeatdownShell (global) and submit API (round-scoped).
+- **Auto-pairing** — `lib/pairUnmatched.ts` runs after every submission and after match auto-resolve, so freed tracks re-enter the pool without running the matchmaker by hand.
+- **Bootstrap** — `scripts/bootstrap-arena.ts` seeds **six** bots (→ three active battles) and reports the same capped gatekeeper number.
 - **Auto-resolve** — vote route re-reads match counts after insert, then calls `resolve_match()` once total votes ≥ 3 with a clear leader
 - **Service client** — `createServiceClient()` uses `@supabase/supabase-js` directly (SSR wrapper blocked profile writes)
 
@@ -184,6 +192,7 @@ WAV files in `public/samples/drums/`.
 - **Google OAuth** profile creation trigger may not fire; `lib/ensureProfile.ts` handles vote + submit (uses service-role client; disambiguates duplicate display names with email tag)
 - **Leaderboard WON column** — counts arena votes **received** on a producer's submissions (not `votes_cast`). Bots show earned votes even though they never cast any.
 - **Bot re-seed** — `seed-bot.ts` / `bootstrap-arena.ts` update username only on existing profiles; no longer zero out `elo_rating` / `submissions_count`. Run `repair-profile-stats.ts` if counts drift.
+- **Dev server OOM** — if `next dev` burns CPU at idle and climbs to `JavaScript heap out of memory`, the `.next` Turbopack cache is corrupted (vicious cycle: OOM crash corrupts cache → next boot spins). `rm -rf .next` fixes it. The OpenNext dev initializer is gated behind `NEXT_DEV_CLOUDFLARE_BINDINGS=1` — app code never reads Cloudflare bindings in dev.
 - **Credentials file** `docs/supabase and google oauth info.md` is `.gitignore`d — never commit it
 - Service role key was rotated after a security incident; publishable + Google AI keys left (low risk, user decision)
 - **Session load grid sync** — `ProfileButton.applySessionData` sets each module's working `grids[m]` from that vault's `activePatternId` before entering the store. `loadPatternToGrid` auto-saves the current grid into the active vault pattern on switch; if `grids` and `activePatternId` disagree (e.g. old demo snapshots), the first dropdown click would corrupt vault data and make patterns look identical

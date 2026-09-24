@@ -16,6 +16,7 @@
 # next.js
 /.next/
 /out/
+/.open-next/
 
 # production
 /build
@@ -43,3 +44,6 @@ docs/supabase and google oauth info.md
 
 # local agent tooling config (machine-specific, not project source)
 .claude/
+
+# wrangler local state
+/.wrangler/

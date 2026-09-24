@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { votesRequired } from '@/lib/gatekeeper';
+import { dedupeRankings } from '@/lib/dedupeRankings';
 import LeaderboardClient from './LeaderboardClient';
 
 export const dynamic = 'force-dynamic';
@@ -7,14 +8,15 @@ export const dynamic = 'force-dynamic';
 export default async function LeaderboardPage() {
   const supabase = await createClient();
 
-  const [{ data: rankings }, { data: { user } }, { data: round }] = await Promise.all([
+  const [{ data: rankings }, { data: { user } }, { data: round }, { count: activeBattles }] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, username, elo_rating, votes_cast, submissions_count, is_admin')
       .order('elo_rating', { ascending: false })
       .limit(50) as unknown as Promise<{ data: any[] | null }>,
     supabase.auth.getUser(),
-    supabase.from('rounds').select('entry_count').eq('status', 'open').order('started_at', { ascending: false }).limit(1).maybeSingle(),
+    supabase.from('rounds').select('entry_count').eq('status', 'open').order('started_at', { ascending: false }).limit(1).maybeSingle() as unknown as Promise<{ data: { entry_count: number } | null }>,
+    supabase.from('matches').select('id', { count: 'exact', head: true }).eq('status', 'active') as unknown as Promise<{ count: number | null }>,
   ]);
 
   const profileIds = (rankings ?? []).map((p) => p.id);
@@ -42,11 +44,13 @@ export default async function LeaderboardPage() {
     }
   }
 
-  const rankingsWithTracks = (rankings ?? []).map((p) => ({
-    ...p,
-    votes_received: votesReceived.get(p.id) ?? 0,
-    track: tracksByUser.get(p.id) ?? null,
-  }));
+  const rankingsWithTracks = dedupeRankings(
+    (rankings ?? []).map((p) => ({
+      ...p,
+      votes_received: votesReceived.get(p.id) ?? 0,
+      track: tracksByUser.get(p.id) ?? null,
+    })),
+  );
 
   const myProfile = rankings?.find((p) => p.id === user?.id) ?? null;
 
@@ -55,7 +59,7 @@ export default async function LeaderboardPage() {
       rankings={rankingsWithTracks}
       user={user}
       myProfile={myProfile}
-      votesRequired={votesRequired(round?.entry_count ?? 4)}
+      votesRequired={votesRequired(round?.entry_count ?? 4, activeBattles ?? 0)}
     />
   );
 }

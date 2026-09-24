@@ -28,7 +28,7 @@ const TRACK_COLORS = { a: '#74b9f3', b: '#ffb300' };
 
 const HOW_IT_WORKS = (voteThreshold: number) => [
   { step: '1 · MAKE',    desc: 'Compose a beat in the Studio using all 5 modules.' },
-  { step: '2 · VOTE',    desc: `Vote on ${voteThreshold} track${voteThreshold !== 1 ? 's' : ''} here in the Arena. This unlocks your ability to submit.` },
+  { step: '2 · VOTE',    desc: `Vote in ${voteThreshold} Arena battle${voteThreshold !== 1 ? 's' : ''} to unlock Submit.` },
   { step: '3 · SUBMIT',  desc: 'Head to Studio, hit SUBMIT, give your track a title.' },
   { step: '4 · WIN ELO', desc: "You're paired blind. After 3 votes the winner gains ELO." },
 ];

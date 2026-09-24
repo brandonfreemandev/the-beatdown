@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useStore, MODULES } from '@/lib/store';
 import { DEMO_TRACK } from '@/lib/demoTrack';
+import { signInWithGoogle } from '@/lib/authSignIn';
 import type { User } from '@supabase/supabase-js';
 
 interface Props {
@@ -79,10 +80,11 @@ export default function ProfileButton({ user, isAdmin = false, onSubmit, gateBlo
 
   const signIn = async () => {
     setSigningIn(true);
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${location.origin}/auth/callback` },
-    });
+    const err = await signInWithGoogle(supabase);
+    if (err) {
+      setSigningIn(false);
+      alert(err);
+    }
   };
 
   const signOut = async () => {

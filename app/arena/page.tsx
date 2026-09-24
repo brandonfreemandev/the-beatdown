@@ -8,7 +8,7 @@ export default async function ArenaPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [{ data: matches }, { data: round }] = await Promise.all([
+  const [{ data: matches }, { data: round }, { count: activeBattles }] = await Promise.all([
     supabase
       .from('matches')
       .select(`
@@ -18,9 +18,12 @@ export default async function ArenaPage() {
     `)
       .in('status', ['active', 'resolved'])
       .order('created_at', { ascending: false })
-      .limit(10) as { data: any[] | null; error: unknown },
-    supabase.from('rounds').select('entry_count').eq('status', 'open').order('started_at', { ascending: false }).limit(1).maybeSingle(),
+      .limit(10) as unknown as Promise<{ data: any[] | null }>,
+    supabase.from('rounds').select('entry_count').eq('status', 'open').order('started_at', { ascending: false }).limit(1).maybeSingle() as unknown as Promise<{ data: { entry_count: number } | null }>,
+    supabase.from('matches').select('id', { count: 'exact', head: true }).eq('status', 'active') as unknown as Promise<{ count: number | null }>,
   ]);
+
+  const voteThreshold = votesRequired(round?.entry_count ?? 4, activeBattles ?? 0);
 
   let userVotes: string[] = [];
   if (user) {
@@ -47,7 +50,7 @@ export default async function ArenaPage() {
       profile={profile}
       matches={matches ?? []}
       userVotes={userVotes}
-      votesRequired={votesRequired(round?.entry_count ?? 4)}
+      votesRequired={voteThreshold}
     />
   );
 }
