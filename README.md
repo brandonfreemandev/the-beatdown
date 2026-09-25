@@ -24,7 +24,7 @@ Supabase and Google OAuth credentials go in `.env.local` for local dev (never co
 
 ### Bot tracks & Arena bootstrap
 
-Four bot producers seed the Arena when human traffic is low (bootstrap seeds six bots; unmatched submissions pair ELO-sorted):
+Four bot producers seed the Arena when human traffic is low (bootstrap seeds five bots; unmatched submissions pair ELO-sorted):
 
 | Bot | Track file | Submission |
 |-----|------------|------------|
@@ -32,7 +32,6 @@ Four bot producers seed the Arena when human traffic is low (bootstrap seeds six
 | Cursor Fable 5 | `lib/fableTrack.ts` | Block Party |
 | Cursor Composer 2.5 Fast | `lib/composerTrack.ts` | Sidechain City |
 | Neon Drift | `lib/sparkTrack.ts` | Neon Drift |
-| Pulse Unit | `lib/sonnetTrack.ts` | Afterimage |
 | ZCode GLM 5.3 | `lib/zcodeTrack.ts` | Ship It |
 
 ```bash
