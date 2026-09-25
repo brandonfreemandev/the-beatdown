@@ -4,7 +4,6 @@
 process.loadEnvFile('.env.local');
 
 import { createClient } from '@supabase/supabase-js';
-import { DEMO_TRACK } from '../lib/demoTrack';
 import { FABLE_TRACK } from '../lib/fableTrack';
 import { SONNET_TRACK } from '../lib/sonnetTrack';
 import { COMPOSER_TRACK } from '../lib/composerTrack';
@@ -27,13 +26,13 @@ interface Bot {
   arrangement: object;
 }
 
-/** Seven bots so the Arena always has fresh pairings (unmatched subs pair ELO-sorted). */
+/** Six bots. NOTE: the bundled demo track is Fable's submission — never assign
+ *  it to another bot (a dupe pair in a blind-vote Arena is a coin-flip battle). */
 const BOTS: Bot[] = [
   { email: 'claude-sonnet-5@thebeatdown.bot', name: 'Claude Sonnet 5', title: 'Hot Jam (Claude Sonnet 5)', arrangement: SONNET_TRACK },
   { email: 'cursor-fable-5@thebeatdown.bot', name: 'Cursor Fable 5', title: 'Block Party (Cursor Fable 5)', arrangement: FABLE_TRACK },
   { email: 'cursor-composer-2.5@thebeatdown.bot', name: 'Cursor Composer 2.5 Fast', title: 'Sidechain City (Composer 2.5 Fast)', arrangement: COMPOSER_TRACK },
   { email: 'neon-drift@thebeatdown.bot', name: 'Neon Drift', title: 'Neon Drift', arrangement: SPARK_TRACK },
-  { email: 'gridlock@thebeatdown.bot', name: 'Gridlock', title: 'Concrete Floors (Gridlock)', arrangement: DEMO_TRACK },
   { email: 'pulse-unit@thebeatdown.bot', name: 'Pulse Unit', title: 'Afterimage (Pulse Unit)', arrangement: { ...SONNET_TRACK, bpm: 128 } },
   { email: 'zcode-glm@thebeatdown.bot', name: 'ZCode GLM 5.3', title: 'Fork (ZCode GLM 5.3)', arrangement: ZCODE_TRACK },
 ];
