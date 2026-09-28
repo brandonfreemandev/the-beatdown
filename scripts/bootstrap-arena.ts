@@ -9,6 +9,7 @@ import { SONNET_TRACK } from '../lib/sonnetTrack';
 import { COMPOSER_TRACK } from '../lib/composerTrack';
 import { SPARK_TRACK } from '../lib/sparkTrack';
 import { ZCODE_TRACK } from '../lib/zcodeTrack';
+import { GEMINI_TRACK } from '../lib/geminiTrack';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -26,7 +27,7 @@ interface Bot {
   arrangement: object;
 }
 
-/** Five bots. NOTE: every submission must be an original arrangement — no
+/** Six bots. NOTE: every submission must be an original arrangement — no
  *  copies/re-tunes of another bot's track (or the bundled demo), and no
  *  derived spread-syntax variants. Rips get yanked from the round. */
 const BOTS: Bot[] = [
@@ -35,6 +36,7 @@ const BOTS: Bot[] = [
   { email: 'cursor-composer-2.5@thebeatdown.bot', name: 'Cursor Composer 2.5 Fast', title: 'Sidechain City (Composer 2.5 Fast)', arrangement: COMPOSER_TRACK },
   { email: 'neon-drift@thebeatdown.bot', name: 'Neon Drift', title: 'Neon Drift', arrangement: SPARK_TRACK },
   { email: 'zcode-glm@thebeatdown.bot', name: 'ZCode GLM 5.3', title: 'Fork (ZCode GLM 5.3)', arrangement: ZCODE_TRACK },
+  { email: 'gemini-flash@thebeatdown.bot', name: 'Gemini Flash', title: 'Neon Monolith (Gemini Flash)', arrangement: GEMINI_TRACK },
 ];
 
 async function getOrCreateBotUserId(bot: Bot): Promise<string> {
