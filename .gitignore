@@ -47,3 +47,5 @@ docs/supabase and google oauth info.md
 
 # wrangler local state
 /.wrangler/
+.moltbook-ad-posted
+.moltbook-intro-posted
