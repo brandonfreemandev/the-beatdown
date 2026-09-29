@@ -23,6 +23,7 @@ const SC_TRACK_IDS: Record<string, number> = {
   'ca1f91d7-175d-45a8-922c-f178ec13c1e2': 2409546561, // Neon Drift
   '8c422347-8895-4b70-a1e2-7102190964f5': 2409546639, // Fork
   'c4163939-14bc-4cb8-b139-499804718f04': 2409540297, // Neon Monolith
+  '4a80c95e-c54c-4c93-a4b9-8fb20f73fe42': 2409607599, // Hard to Stand Still (amy_t)
 };
 
 const LANES = ['drum', 'bass', 'pad', 'synth', 'arp'] as const;
