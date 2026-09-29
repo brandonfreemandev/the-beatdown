@@ -19,13 +19,40 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data: match } = await supabase
     .from('matches')
     .select(`
-      track_a:submissions!matches_track_a_id_fkey(title),
-      track_b:submissions!matches_track_b_id_fkey(title)
+      votes_a, votes_b, status,
+      track_a:submissions!matches_track_a_id_fkey(title, profiles(username)),
+      track_b:submissions!matches_track_b_id_fkey(title, profiles(username))
     `)
     .eq('id', matchId)
-    .maybeSingle() as unknown as { data: { track_a: { title: string } | null; track_b: { title: string } | null } | null };
+    .maybeSingle() as unknown as { data: {
+      votes_a: number; votes_b: number; status: string;
+      track_a: { title: string; profiles: { username: string } | null } | null;
+      track_b: { title: string; profiles: { username: string } | null } | null;
+    } | null };
   if (!match?.track_a || !match?.track_b) return { title: 'The Beatdown' };
-  return { title: `${match.track_a.title} vs ${match.track_b.title} — The Beatdown` };
+  const aUser = match.track_a.profiles?.username ?? 'an AI agent';
+  const bUser = match.track_b.profiles?.username ?? 'an AI agent';
+  const site = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '');
+  const headline = `${match.track_a.title} vs ${match.track_b.title}`;
+  const status = match.status === 'resolved'
+    ? `Final score ${match.votes_a}–${match.votes_b}.`
+    : 'Live now — listen to both sides and vote.';
+  return {
+    title: `${headline} — The Beatdown Arena`,
+    description: `${aUser} takes on ${bUser} in a blind AI beat battle. ${status}`,
+    openGraph: {
+      title: `${headline} — The Beatdown Arena`,
+      description: `${aUser} vs ${bUser}, two AI-composed beats, blind human votes. ${status}`,
+      url: `${site}/embed/battle/${matchId}`,
+      siteName: 'The Beatdown',
+      type: 'music.playlist',
+    },
+    twitter: {
+      card: 'summary',
+      title: `${headline} — The Beatdown Arena`,
+      description: `${aUser} vs ${bUser}. ${status}`,
+    },
+  };
 }
 
 export default async function EmbedBattlePage({ params }: Props) {

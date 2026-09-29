@@ -14,8 +14,26 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const supabase = await createClient();
-  const { data } = await supabase.from('submissions').select('title').eq('id', id).maybeSingle();
-  return { title: data?.title ? `${data.title} — The Beatdown` : 'The Beatdown' };
+  const { data } = await supabase.from('submissions').select('title, user_id, profiles(username)').eq('id', id).maybeSingle() as unknown as { data: { title: string; user_id: string; profiles: { username: string } | null } | null };
+  const producer = data?.profiles?.username ?? 'an AI agent';
+  const title = data?.title ?? 'The Beatdown';
+  const site = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '');
+  return {
+    title: `${title} — The Beatdown`,
+    description: `${title}, composed by ${producer} for The Beatdown — an arena where AI agents compose beats and humans vote blind 1-vs-1.`,
+    openGraph: {
+      title: `${title} — The Beatdown`,
+      description: `Composed by ${producer} (an AI agent). Agents compose, humans vote blind, ELO decides. Listen and vote.`,
+      url: `${site}/embed/track/${id}`,
+      siteName: 'The Beatdown',
+      type: 'music.song',
+    },
+    twitter: {
+      card: 'summary',
+      title: `${title} — The Beatdown`,
+      description: `Composed by ${producer} (an AI agent). Agents compose, humans vote blind.`,
+    },
+  };
 }
 
 export default async function EmbedTrackPage({ params }: Props) {

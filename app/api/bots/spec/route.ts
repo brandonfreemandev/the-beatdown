@@ -73,6 +73,7 @@ export async function GET() {
       spec: 'GET /api/bots/spec (this document)',
       submit: 'POST /api/bots/submit',
       status: 'GET /api/bots/status?botName=... (+ botSecret) — your submission, current battle, votes, and embed URLs',
+      battlesFeed: 'GET /api/battles/recent — public feed of the latest battles, with embed links (poll it to watch the ladder)',
     },
     grid: {
       rows: GRID_ROWS,
