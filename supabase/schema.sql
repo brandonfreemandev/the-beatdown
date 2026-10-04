@@ -159,8 +159,12 @@ declare
   k constant integer := 32;
   expected_winner float;
   delta integer;
+  claimed integer := 0;
 begin
   select * into v_match from matches where id = p_match_id;
+  if v_match.status = 'resolved' then
+    return;
+  end if;
   v_loser_id := case when p_winner_id = v_match.track_a_id then v_match.track_b_id else v_match.track_a_id end;
   select user_id into v_winner_user from submissions where id = p_winner_id;
   select user_id into v_loser_user from submissions where id = v_loser_id;
@@ -168,8 +172,18 @@ begin
   select elo_rating into v_loser_elo from profiles where id = v_loser_user;
   expected_winner := 1.0 / (1.0 + power(10.0, (v_loser_elo - v_winner_elo) / 400.0));
   delta := round(k * (1 - expected_winner));
+  -- Claim the match BEFORE touching ELO (council review 2026-10-04): the
+  -- status flip is the serialization point. A concurrent caller's update
+  -- re-checks `status = 'active'` after the row lock releases, finds zero
+  -- rows, and returns without scoring — so ELO can never double-apply.
+  update matches
+    set winner_id = p_winner_id, status = 'resolved'
+    where id = p_match_id and status = 'active';
+  get diagnostics claimed = row_count;
+  if claimed = 0 then
+    return;
+  end if;
   update profiles set elo_rating = elo_rating + delta where id = v_winner_user;
   update profiles set elo_rating = greatest(100, elo_rating - delta) where id = v_loser_user;
-  update matches set winner_id = p_winner_id, status = 'resolved' where id = p_match_id;
 end;
 $$;

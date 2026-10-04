@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { buildPairHistory, greedyPair, MAX_CONCURRENT_BATTLES } from '@/lib/pairUnmatched';
 import type { Match, Profile, Submission } from '@/lib/supabase/types';
 
 export async function POST() {
@@ -21,6 +22,17 @@ export async function POST() {
     .select('track_a_id, track_b_id')
     .eq('round_id', round.id)
     .eq('status', 'active') as { data: Pick<Match, 'track_a_id' | 'track_b_id'>[] | null; error: unknown };
+
+  // Council spec: one live battle site-wide — refuse to fan out at the cap.
+  if ((matched ?? []).length >= MAX_CONCURRENT_BATTLES) {
+    return NextResponse.json({ message: 'Match cap reached — resolve a battle first', pairs: [] });
+  }
+
+  // Rematch history across all rounds — prefer fresh match-ups when possible.
+  const { data: pastMatches } = await service
+    .from('matches')
+    .select('track_a_id, track_b_id') as { data: Pick<Match, 'track_a_id' | 'track_b_id'>[] | null; error: unknown };
+  const pairHistory = buildPairHistory(pastMatches ?? []);
 
   const matchedIds = new Set(
     (matched ?? []).flatMap((m) => [m.track_a_id, m.track_b_id])
@@ -57,7 +69,7 @@ export async function POST() {
     }));
 
     const prompt = `You are the matchmaker for The Beatdown, a competitive music sequencer.
-Create fair 1-vs-1 pairings. Prefer similar ELO ratings.
+Create fair 1-vs-1 pairings. Prefer similar ELO ratings, and prefer pairing agents with LOWER battlesFought so rematches happen only when unavoidable.
 Return ONLY a JSON array of pairs: [["id1","id2"],["id3","id4"]]
 Each ID appears in at most one pair. Odd submissions are left unpaired.
 
@@ -69,13 +81,14 @@ ${JSON.stringify(subSummaries, null, 2)}`;
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (jsonMatch) pairs = JSON.parse(jsonMatch[0]);
   } catch {
-    // ELO-sorted fallback
+    // Rematch-aware ELO fallback (same logic as pairUnmatched)
     const sorted = [...unmatched].sort(
       (a, b) => (eloMap[a.user_id] ?? 1000) - (eloMap[b.user_id] ?? 1000)
     );
-    for (let i = 0; i + 1 < sorted.length; i += 2) {
-      pairs.push([sorted[i].id, sorted[i + 1].id]);
-    }
+    pairs.push(...greedyPair(
+      sorted.map((s) => ({ id: s.id, elo: eloMap[s.user_id] ?? 1000 })),
+      pairHistory,
+    ));
   }
 
   const created: Match[] = [];
