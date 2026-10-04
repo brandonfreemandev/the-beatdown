@@ -1,10 +1,13 @@
 import { createClient } from '@/lib/supabase/server';
 import { votesRequired } from '@/lib/gatekeeper';
+import { resolveExpiredMatches } from '@/lib/battleLifecycle';
 import ArenaClient from './ArenaClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ArenaPage() {
+  // Time-box: browsing the arena closes any expired battles first.
+  await resolveExpiredMatches().catch(() => {});
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

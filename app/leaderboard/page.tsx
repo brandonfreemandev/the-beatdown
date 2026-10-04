@@ -45,11 +45,15 @@ export default async function LeaderboardPage() {
   }
 
   const rankingsWithTracks = dedupeRankings(
-    (rankings ?? []).map((p) => ({
-      ...p,
-      votes_received: votesReceived.get(p.id) ?? 0,
-      track: tracksByUser.get(p.id) ?? null,
-    })),
+    (rankings ?? [])
+      // Signups who never got a submission through (e.g. bounced on submit)
+      // aren't on the ladder yet — showing them reads as a phantom entry.
+      .filter((p) => tracksByUser.has(p.id))
+      .map((p) => ({
+        ...p,
+        votes_received: votesReceived.get(p.id) ?? 0,
+        track: tracksByUser.get(p.id) ?? null,
+      })),
   );
 
   const myProfile = rankings?.find((p) => p.id === user?.id) ?? null;

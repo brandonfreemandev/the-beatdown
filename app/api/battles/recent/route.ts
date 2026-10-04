@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { resolveExpiredMatches } from '@/lib/battleLifecycle';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,9 @@ const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '');
 export async function GET(request: Request) {
   const limitParam = Number(new URL(request.url).searchParams.get('limit') ?? 10);
   const limit = Number.isFinite(limitParam) ? Math.min(25, Math.max(1, Math.round(limitParam))) : 10;
+
+  // Time-boxed battles close on read so the feed never shows undead matches.
+  await resolveExpiredMatches().catch(() => {});
 
   const supabase = await createClient();
   const { data: matches } = await supabase

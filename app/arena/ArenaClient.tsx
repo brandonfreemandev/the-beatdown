@@ -1,21 +1,13 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import ArenaPlayer from '@/components/ArenaPlayer';
+import BattleCard, { type BattleCardMatch } from '@/components/BattleCard';
 import SiteNav from '@/components/SiteNav';
 import { GATEKEEPER_ENABLED } from '@/lib/gatekeeper';
-import type { Profile, ArrangementData } from '@/lib/supabase/types';
+import type { Profile } from '@/lib/supabase/types';
 import type { User } from '@supabase/supabase-js';
 
-interface ArenaMatch {
-  id: string;
-  votes_a: number;
-  votes_b: number;
-  status: 'active' | 'resolved';
-  winner_id: string | null;
-  track_a: { id: string; title: string; arrangement: ArrangementData };
-  track_b: { id: string; title: string; arrangement: ArrangementData };
-}
+interface ArenaMatch extends BattleCardMatch {}
 
 interface Props {
   user: User | null;
@@ -24,8 +16,6 @@ interface Props {
   userVotes: string[];
   votesRequired: number;
 }
-
-const TRACK_COLORS = { a: '#74b9f3', b: '#ffb300' };
 
 const HOW_IT_WORKS = (voteThreshold: number) => [
   { step: '1 · MAKE',    desc: 'Compose a beat in the Studio using all 5 modules.' },
@@ -41,26 +31,10 @@ export default function ArenaClient({ user, profile, matches, userVotes, votesRe
   const [voted, setVoted] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const [matchmaking, setMatchmaking] = useState(false);
-  const [matchmakeResult, setMatchmakeResult] = useState('');
   const [howOpen, setHowOpen] = useState(false);
-
-  const runMatchmaker = async () => {
-    setMatchmaking(true);
-    setMatchmakeResult('');
-    const res = await fetch('/api/matchmaker', { method: 'POST' });
-    const data = await res.json();
-    if (res.ok) {
-      setMatchmakeResult(`${data.pairs} match${data.pairs !== 1 ? 'es' : ''} created`);
-      router.refresh();
-    } else {
-      setMatchmakeResult(data.error ?? 'Failed');
-    }
-    setMatchmaking(false);
-  };
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
   const castVote = async (matchId: string, votedForId: string) => {
-    if (!user) return;
     setLoading(matchId);
     setError('');
     const res = await fetch('/api/vote', {
@@ -69,13 +43,20 @@ export default function ArenaClient({ user, profile, matches, userVotes, votesRe
       body: JSON.stringify({ matchId, votedForId }),
     });
     const data = await res.json();
-    if (!res.ok) { setError(data.error); }
-    else { setVoted((v) => ({ ...v, [matchId]: votedForId })); router.refresh(); }
+    if (!res.ok && res.status !== 409) { setError(data.error); }
+    else {
+      if (res.status === 409) setError('You already voted on this battle.');
+      setVoted((v) => ({ ...v, [matchId]: votedForId }));
+      router.refresh();
+    }
     setLoading(null);
   };
 
-  const alreadyVoted = (matchId: string) =>
-    userVotes.includes(matchId) || voted[matchId];
+  const alreadyVoted = (matchId: string): boolean =>
+    userVotes.includes(matchId) || voted[matchId] !== undefined;
+
+  const live = matches.filter((m) => m.status === 'active');
+  const archived = matches.filter((m) => m.status === 'resolved');
 
   return (
     <div
@@ -143,28 +124,7 @@ export default function ArenaClient({ user, profile, matches, userVotes, votesRe
 
         {!user && (
           <div style={{ border: '3px solid var(--bd-ink)', padding: '16px 20px', marginBottom: 32, fontSize: 11, letterSpacing: 1 }}>
-            Sign in to cast votes and submit tracks to the Arena.
-          </div>
-        )}
-
-        {/* Matchmaker */}
-        {user && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 40 }}>
-            <button
-              onClick={runMatchmaker}
-              disabled={matchmaking}
-              style={{
-                background: 'var(--bd-ink)', color: 'var(--bd-on-ink)', border: 'none',
-                fontFamily: 'monospace', fontWeight: 700, fontSize: 10, letterSpacing: 2,
-                padding: '12px 22px', cursor: matchmaking ? 'wait' : 'pointer',
-                opacity: matchmaking ? 0.6 : 1,
-              }}
-            >
-              {matchmaking ? 'MATCHING…' : '⚡ RUN MATCHMAKER'}
-            </button>
-            {matchmakeResult && (
-              <span style={{ fontSize: 10, letterSpacing: 1, color: 'var(--bd-muted)' }}>{matchmakeResult}</span>
-            )}
+            Voting is open — no account needed, just tap a side. Sign in to submit tracks and climb the ELO ladder.
           </div>
         )}
 
@@ -185,108 +145,75 @@ export default function ArenaClient({ user, profile, matches, userVotes, votesRe
           </div>
         )}
 
-        {/* Match cards */}
-        {matches.map((match) => {
+        {/* ── LIVE BATTLES — the action, always first ── */}
+        {live.length > 0 && (
+          <div style={{ border: '3px solid var(--bd-ink)', background: 'var(--bd-ink)', color: 'var(--bd-on-ink)', padding: '10px 16px', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontWeight: 700, fontSize: 9, letterSpacing: 3 }}>
+              <span style={{ color: 'var(--bd-red)' }}>●</span> LIVE BATTLES
+            </span>
+            <span style={{ fontSize: 9, letterSpacing: 2, color: 'var(--bd-on-ink-muted)' }}>{live.length} OPEN FOR VOTING</span>
+          </div>
+        )}
+        {live.map((match) => {
           const hasVoted = alreadyVoted(match.id);
-          const myVote = voted[match.id] ?? (userVotes.includes(match.id) ? 'voted' : null);
-          const isLoading = loading === match.id;
-          const isResolved = match.status === 'resolved';
-          const total = match.votes_a + match.votes_b;
-          const pctA = total > 0 ? Math.round((match.votes_a / total) * 100) : 50;
-          const pctB = total > 0 ? Math.round((match.votes_b / total) * 100) : 50;
-          const winnerIsA = match.winner_id === match.track_a.id;
-          const winnerIsB = match.winner_id === match.track_b.id;
-
+          const myVote = voted[match.id] ?? null;
           return (
-            <div key={match.id} style={{ marginBottom: 48, border: '3px solid var(--bd-ink)' }}>
-              {/* Match header */}
-              <div style={{
-                background: isResolved ? 'var(--bd-ink-soft)' : 'var(--bd-ink)', color: 'var(--bd-on-ink)',
-                padding: '10px 16px', fontWeight: 700, fontSize: 9, letterSpacing: 3,
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              }}>
-                <span>{isResolved ? '✓ RESOLVED' : 'BATTLE'}</span>
-                <span style={{ color: 'var(--bd-on-ink-muted)' }}>{total} VOTE{total !== 1 ? 'S' : ''}</span>
-              </div>
-
-              {/* Tracks */}
-              <div className="arena-match-tracks">
-                <ArenaPlayer
-                  arrangement={match.track_a.arrangement}
-                  color={TRACK_COLORS.a}
-                  label="TRACK A"
-                  title={match.track_a.title}
-                />
-                <div className="arena-track-divider" />
-                <ArenaPlayer
-                  arrangement={match.track_b.arrangement}
-                  color={TRACK_COLORS.b}
-                  label="TRACK B"
-                  title={match.track_b.title}
-                />
-              </div>
-
-              {/* Vote bar */}
-              {hasVoted && total > 0 && (
-                <div style={{ height: 6, display: 'flex', borderTop: '2px solid var(--bd-ink)' }}>
-                  <div style={{ width: `${pctA}%`, background: TRACK_COLORS.a, transition: 'width 0.4s' }} />
-                  <div style={{ flex: 1, background: TRACK_COLORS.b }} />
-                </div>
-              )}
-
-              {/* Vote buttons */}
-              <div style={{ borderTop: hasVoted && total > 0 ? 'none' : '3px solid var(--bd-ink)', display: 'flex' }}>
-                <VoteBtn
-                  onClick={() => castVote(match.id, match.track_a.id)}
-                  disabled={!!hasVoted || !user || isLoading || isResolved}
-                  active={myVote === match.track_a.id}
-                  color={TRACK_COLORS.a}
-                  winner={winnerIsA}
-                  label={hasVoted || isResolved
-                    ? `${winnerIsA ? '▲ WINNER · ' : ''}${match.votes_a} vote${match.votes_a !== 1 ? 's' : ''} · ${pctA}%`
-                    : `VOTE FOR ${match.track_a.title.toUpperCase()}`}
-                />
-                <div style={{ width: 3, background: 'var(--bd-ink)', flexShrink: 0 }} />
-                <VoteBtn
-                  onClick={() => castVote(match.id, match.track_b.id)}
-                  disabled={!!hasVoted || !user || isLoading || isResolved}
-                  active={myVote === match.track_b.id}
-                  color={TRACK_COLORS.b}
-                  winner={winnerIsB}
-                  label={hasVoted || isResolved
-                    ? `${winnerIsB ? '▲ WINNER · ' : ''}${match.votes_b} vote${match.votes_b !== 1 ? 's' : ''} · ${pctB}%`
-                    : `VOTE FOR ${match.track_b.title.toUpperCase()}`}
-                />
-              </div>
+            <div key={match.id} id={`battle-${match.id}`} style={{ marginBottom: 48, scrollMarginTop: 64 }}>
+              <BattleCard
+                match={match}
+                hasVoted={hasVoted}
+                myVote={myVote}
+                isLoading={loading === match.id}
+                onVote={castVote}
+              />
             </div>
           );
         })}
+
+        {live.length === 0 && archived.length > 0 && (
+          <div style={{ border: '3px solid var(--bd-ink)', padding: '32px', textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: 4, marginBottom: 8 }}>NO LIVE BATTLES</div>
+            <div style={{ fontSize: 10, color: 'var(--bd-muted)', letterSpacing: 1 }}>
+              New fights appear the moment the matchmaker pairs a submission.
+            </div>
+          </div>
+        )}
+
+        {/* ── RESOLVED ARCHIVE — collapsed by default ── */}
+        {archived.length > 0 && (
+          <>
+            <button
+              onClick={() => setArchiveOpen((o) => !o)}
+              style={{
+                width: '100%', border: '3px solid var(--bd-ink)', borderTop: 'none', background: 'var(--bd-ink-soft)',
+                color: 'var(--bd-on-ink)', padding: '10px 16px', cursor: 'pointer',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                fontFamily: 'monospace', fontWeight: 700, fontSize: 9, letterSpacing: 3,
+              }}
+            >
+              <span>∎ RESOLVED — ARCHIVE</span>
+              <span style={{ color: 'var(--bd-on-ink-muted)' }}>{archiveOpen ? '▲ HIDE' : `▼ SHOW ${archived.length}`}</span>
+            </button>
+            {archiveOpen && archived.map((match) => {
+              const hasVoted = alreadyVoted(match.id);
+              const myVote = voted[match.id] ?? null;
+              return (
+                <div key={match.id} id={`battle-${match.id}`} style={{ marginBottom: 48, scrollMarginTop: 64 }}>
+                  <BattleCard
+                    match={match}
+                    hasVoted={hasVoted}
+                    myVote={myVote}
+                    isLoading={loading === match.id}
+                    onVote={castVote}
+                  />
+                </div>
+              );
+            })}
+          </>
+        )}
       </div>
       </div>
     </div>
   );
 }
 
-function VoteBtn({ onClick, disabled, active, color, label, winner }: {
-  onClick: () => void; disabled: boolean; active: boolean; color: string; label: string; winner?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        flex: 1, padding: '14px 12px',
-        background: winner ? color : active ? color : 'transparent',
-        border: 'none',
-        fontFamily: 'monospace', fontWeight: 700, fontSize: 10, letterSpacing: 1,
-        cursor: disabled ? 'default' : 'pointer',
-        // On a fixed track-color background, text stays literal black; on the page bg it follows the theme
-        color: winner || active ? '#000' : 'var(--bd-ink)',
-        transition: 'background 0.15s',
-        textAlign: 'center',
-      }}
-    >
-      {label}
-    </button>
-  );
-}
