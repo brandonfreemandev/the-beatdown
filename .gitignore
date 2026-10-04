@@ -45,7 +45,14 @@ docs/supabase and google oauth info.md
 # local agent tooling config (machine-specific, not project source)
 .claude/
 
-# wrangler local state
+# wrangler local state (any depth — root and workers/*)
 /.wrangler/
+.wrangler/
 .moltbook-ad-posted
 .moltbook-intro-posted
+
+# responder worker local secrets
+.dev.vars
+
+# supabase cli local temp
+supabase/.temp/

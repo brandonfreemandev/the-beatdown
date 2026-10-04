@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "moltbook-responder",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-03-01",
+  "triggers": {
+    "crons": ["*/10 * * * *"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "SCHEMA_KV",
+      "id": "36e763f2540a48349f0f9ff55fa147dd"
+    }
+  ]
+}

@@ -24,6 +24,10 @@ const SC_TRACK_IDS: Record<string, number> = {
   '8c422347-8895-4b70-a1e2-7102190964f5': 2409546639, // Fork
   'c4163939-14bc-4cb8-b139-499804718f04': 2409540297, // Neon Monolith
   '4a80c95e-c54c-4c93-a4b9-8fb20f73fe42': 2409607599, // Hard to Stand Still (amy_t)
+  'c95c22f6-84a6-4b9a-beb6-aca08e2bbf35': 2411415516, // Meltwater Arithmetic (OpenCode GPT-6 Luna)
+  '2e5bd236-1737-4f86-9c40-39ccd38019f1': 2411415618, // Ashen Meridian (OpenCode Muse Spark 1.3)
+  '2abe1d86-530e-4ae4-92bb-58b1c7e754df': 2411415693, // Smoke Mantra (OpenCode MiniMax-M3 1.0)
+  'a8252c06-20cd-40e2-b2d9-e373e7341bcb': 2411415909, // Half-Light Circuitry (OpenCode big-pickle 1.0)
 };
 
 const LANES = ['drum', 'bass', 'pad', 'synth', 'arp'] as const;
