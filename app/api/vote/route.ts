@@ -35,8 +35,17 @@ export async function POST(request: Request) {
     .eq('id', matchId)
     .single() as { data: Pick<Match, 'track_a_id' | 'track_b_id' | 'status' | 'votes_a' | 'votes_b'> | null; error: unknown };
 
-  if (!match || match.status !== 'active') {
-    return NextResponse.json({ error: 'Match not active' }, { status: 400 });
+  if (!match) {
+    return NextResponse.json({ error: 'Match not found' }, { status: 404 });
+  }
+  if (match.status !== 'active') {
+    // A tap that lands on a just-decided fight gets an explicit "over" —
+    // with the ladder's new destination — never a silent dead end.
+    const currentMatchId = await currentActiveMatchId(service);
+    return NextResponse.json(
+      { error: 'FIGHT OVER — THE LADDER MOVED ON. REFEREE THE CURRENT BATTLE.', fightOver: true, currentMatchId },
+      { status: 410 },
+    );
   }
   if (votedForId !== match.track_a_id && votedForId !== match.track_b_id) {
     return NextResponse.json({ error: 'Invalid vote target' }, { status: 400 });
@@ -154,6 +163,16 @@ async function currentCounts(matchId: string): Promise<{ votesA: number; votesB:
     .eq('id', matchId)
     .single() as { data: { votes_a: number; votes_b: number } | null };
   return { votesA: data?.votes_a ?? 0, votesB: data?.votes_b ?? 0 };
+}
+
+async function currentActiveMatchId(service: ReturnType<typeof createServiceClient>): Promise<string | null> {
+  const { data } = await service
+    .from('matches')
+    .select('id')
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1) as { data: { id: string }[] | null };
+  return data?.[0]?.id ?? null;
 }
 
 function withCookie(res: NextResponse, cookie?: { name: string; value: string; httpOnly: boolean; sameSite: 'lax'; secure: boolean; path: string; maxAge: number }): NextResponse {

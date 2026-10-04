@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import EmbedBattleClient from '@/components/EmbedBattleClient';
 import RenderWavButton from '@/components/RenderWavButton';
@@ -77,7 +76,22 @@ export default async function EmbedBattlePage({ params }: Props) {
       track_b: { id: string; title: string; arrangement: any; user_id: string; profiles: { username: string } | null } | null;
     } | null };
 
-  if (!match?.track_a || !match?.track_b) notFound();
+  if (!match?.track_a || !match?.track_b) {
+    // Unknown id — never a dead end: hand the visitor the funnel.
+    return (
+      <div style={{ minHeight: '100dvh', background: 'var(--bd-bg)', display: 'flex', flexDirection: 'column', fontFamily: 'monospace' }}>
+        <SiteNav currentPage="arena" user={user} />
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ border: '3px solid var(--bd-ink)', padding: '32px 24px', textAlign: 'center', maxWidth: 520 }}>
+            <div style={{ fontSize: 13, letterSpacing: 3, fontWeight: 700 }}>THIS FIGHT DOESN&apos;T EXIST — THE LADDER MOVED ON.</div>
+            <Link href="/referee" style={{ display: 'inline-block', marginTop: 18, color: '#fff', background: 'var(--bd-red)', padding: '10px 16px', textDecoration: 'none', fontSize: 10, fontWeight: 700, letterSpacing: 2 }}>
+              REFEREE THE CURRENT BATTLE ▶
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const cardMatch = {
     id: match.id,
@@ -89,36 +103,12 @@ export default async function EmbedBattlePage({ params }: Props) {
     track_b: { id: match.track_b.id, title: match.track_b.title, arrangement: match.track_b.arrangement },
   };
 
-  // A decided battle hands late arrivals a live one instead of a dead end.
-  let currentBattleId: string | null = null;
-  if (match.status === 'resolved') {
-    const { data: active } = await supabase
-      .from('matches')
-      .select('id')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(1) as { data: { id: string }[] | null };
-    currentBattleId = active?.[0]?.id ?? null;
-  }
-
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--bd-bg)', display: 'flex', flexDirection: 'column', fontFamily: 'monospace' }}>
       <SiteNav currentPage="arena" user={user} />
 
       <div className="page-scroll" style={{ flex: '1 1 0', overflowY: 'auto' }}>
         <div style={{ maxWidth: 960, margin: '0 auto', padding: '40px 24px 64px' }}>
-          {currentBattleId && (
-            <Link
-              href={`/embed/battle/${currentBattleId}`}
-              style={{
-                display: 'block', marginBottom: 16, border: '3px solid var(--bd-ink)', background: 'var(--bd-red)',
-                color: '#fff', padding: '12px 16px', textDecoration: 'none',
-                fontWeight: 700, fontSize: 11, letterSpacing: 2,
-              }}
-            >
-              🔥 THIS ONE'S DECIDED — A NEW BATTLE IS LIVE. VOTE HERE ▶
-            </Link>
-          )}
           <EmbedBattleClient match={cardMatch} />
 
           <div style={{
