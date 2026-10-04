@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { audioEngine, SCALE_FREQS } from './audioEngine';
+import { claimAudioFocus, releaseAudioFocus } from './audioFocus';
 import { useStore, MODULES, GRID_ROWS, GRID_STEPS } from './store';
 
 export function usePlayback() {
@@ -62,9 +63,7 @@ export function usePlayback() {
         setTimelineSec(0);
         // fall through and play step 0 immediately — no gap on loop
       } else {
-        if (arrTimerRef.current) { clearInterval(arrTimerRef.current); arrTimerRef.current = null; }
-        setArrIsPlaying(false);
-        arrIsPlayingRef.current = false;
+        stopAll();
         return;
       }
     }
@@ -95,8 +94,19 @@ export function usePlayback() {
   };
 
   // ── Stable start/stop helpers ─────────────────────────────────────────────
+  const focusId = useRef({}); // stable per-hook identity for the site-wide audio referee
+  const stopAll = useCallback(() => {
+    if (patternTimerRef.current) { clearInterval(patternTimerRef.current); patternTimerRef.current = null; }
+    if (arrTimerRef.current) { clearInterval(arrTimerRef.current); arrTimerRef.current = null; }
+    setPlayhead(-1);
+    setIsPlaying(false); isPlayingRef.current = false;
+    setArrIsPlaying(false); arrIsPlayingRef.current = false;
+    releaseAudioFocus(focusId.current);
+  }, []);
+
   const startPattern = useCallback(() => {
     audioEngine.resume();
+    claimAudioFocus(focusId.current, stopAll);
     patternStepRef.current = 0;
     if (patternTimerRef.current) clearInterval(patternTimerRef.current);
     patternTimerRef.current = setInterval(() => patternTickRef.current(), getMsPerStep());
@@ -105,11 +115,13 @@ export function usePlayback() {
   const stopPattern = useCallback(() => {
     if (patternTimerRef.current) { clearInterval(patternTimerRef.current); patternTimerRef.current = null; }
     setPlayhead(-1);
-  }, []);
+    releaseAudioFocus(focusId.current);
+  }, [stopAll]);
 
   // startArr resumes from current arrStepRef position (supports pause/resume)
   const startArr = useCallback(() => {
     audioEngine.resume();
+    claimAudioFocus(focusId.current, stopAll);
     if (arrTimerRef.current) clearInterval(arrTimerRef.current);
     arrTimerRef.current = setInterval(() => arrTickRef.current(), getMsPerStep());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -117,7 +129,8 @@ export function usePlayback() {
   // Pause: stop the interval but keep timelineSec position
   const stopArr = useCallback(() => {
     if (arrTimerRef.current) { clearInterval(arrTimerRef.current); arrTimerRef.current = null; }
-  }, []);
+    releaseAudioFocus(focusId.current);
+  }, [stopAll]);
 
   const returnToStart = useCallback(() => {
     stopArr();
@@ -166,6 +179,7 @@ export function usePlayback() {
     return () => {
       if (patternTimerRef.current) clearInterval(patternTimerRef.current);
       if (arrTimerRef.current) clearInterval(arrTimerRef.current);
+      releaseAudioFocus(focusId.current);
     };
   }, []);
 

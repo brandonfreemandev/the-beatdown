@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { audioEngine, SCALE_FREQS } from './audioEngine';
+import { claimAudioFocus, releaseAudioFocus } from './audioFocus';
 import { GRID_ROWS, GRID_STEPS, MODULES } from './store';
 import { mapCutoff, mapDecay, mapAttack, mapRes, mapPan } from './knobMapping';
 import type { ModuleType } from './audioEngine';
@@ -15,17 +16,22 @@ export function useTrackPlayback(arrangement: ArrangementData | null) {
 
   const stepRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const focusId = useRef({}); // stable per-hook identity for the site-wide audio referee
 
   const stop = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setPlaying(false);
     setCurrentSec(0);
     stepRef.current = 0;
+    releaseAudioFocus(focusId.current);
   }, []);
 
   const toggle = useCallback(() => {
     if (!arrangement) return;
     if (timerRef.current) { stop(); return; }
+
+    // Only one tune site-wide: taking the mic stops whoever else was playing.
+    claimAudioFocus(focusId.current, stop);
 
     // Leaderboard/Arena never mount Studio's BeatdownShell, so the engine may never have been
     // initialized — without this, every preview() call below would silently no-op.
@@ -92,7 +98,10 @@ export function useTrackPlayback(arrangement: ArrangementData | null) {
   }, [arrangement, stop]);
 
   // Stop cleanly if the component unmounts mid-playback
-  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+  useEffect(() => () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    releaseAudioFocus(focusId.current);
+  }, []);
 
   return { playing, currentSec, toggle, stop };
 }

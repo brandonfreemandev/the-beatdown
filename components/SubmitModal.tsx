@@ -15,6 +15,7 @@ export default function SubmitModal({ user, onClose }: Props) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'gate'>('idle');
   const [gateInfo, setGateInfo] = useState<{ required: number; cast: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [submittedId, setSubmittedId] = useState<string | null>(null);
   const supabase = createClient();
 
   const signIn = async () => {
@@ -25,30 +26,44 @@ export default function SubmitModal({ user, onClose }: Props) {
   const submit = async () => {
     if (!title.trim()) return;
     setStatus('loading');
-    const state = useStore.getState();
-    const arrangement = {
-      bpm: state.bpm,
-      grids: state.grids,
-      vaults: state.vaults, // full pattern data — without this, blocks referencing a non-active pattern can't be reconstructed
-      timeline: state.timeline,
-      moduleSettings: state.moduleSettings,
-    };
+    try {
+      const state = useStore.getState();
+      const arrangement = {
+        bpm: state.bpm,
+        grids: state.grids,
+        vaults: state.vaults, // full pattern data — without this, blocks referencing a non-active pattern can't be reconstructed
+        timeline: state.timeline,
+        moduleSettings: state.moduleSettings,
+      };
 
-    const res = await fetch('/api/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, arrangement }),
-    });
-    const data = await res.json();
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, arrangement }),
+      });
+      let data: { error?: string; required?: number; cast?: number; submission?: { id: string } } | null = null;
+      try {
+        data = await res.json();
+      } catch {
+        // Non-JSON response (proxy error page) — treat as a generic failure.
+      }
 
-    if (res.status === 403 && data.error === 'GATEKEEPER') {
-      setGateInfo({ required: data.required, cast: data.cast });
-      setStatus('gate');
-    } else if (!res.ok) {
-      setErrorMsg(data.error ?? 'Something went wrong');
+      if (res.status === 403 && data?.error === 'GATEKEEPER') {
+        setGateInfo({ required: data.required ?? 0, cast: data.cast ?? 0 });
+        setStatus('gate');
+      } else if (!res.ok) {
+        setErrorMsg(data?.error ?? 'Something went wrong — your track was NOT submitted. Try again.');
+        setStatus('error');
+      } else if (data?.submission?.id) {
+        setSubmittedId(data.submission.id);
+        setStatus('success');
+      } else {
+        setErrorMsg('Submission succeeded but the response was unclear — check the leaderboard before retrying.');
+        setStatus('error');
+      }
+    } catch {
+      setErrorMsg('Connection hiccup — your track was NOT submitted. Try again.');
       setStatus('error');
-    } else {
-      setStatus('success');
     }
   };
 
@@ -131,7 +146,20 @@ export default function SubmitModal({ user, onClose }: Props) {
             <>
               <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>SUBMITTED ✓</p>
               <p style={{ fontSize: 12, lineHeight: 1.6, marginBottom: 16 }}>
-                Your track is in the Arena. The Matchmaker will pair you soon.
+                Your track is in the Arena. We&apos;ll pair you with an opponent as soon as the next track lands.
+                {submittedId && (
+                  <>
+                    <br />
+                    <a
+                      href={`/embed/track/${submittedId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: 'var(--bd-red)', fontWeight: 700 }}
+                    >
+                      ▶ HEAR YOUR TRACK NOW
+                    </a>
+                  </>
+                )}
               </p>
               <button onClick={onClose} style={primaryBtn}>CLOSE</button>
             </>
