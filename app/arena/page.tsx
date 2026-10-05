@@ -15,7 +15,7 @@ export default async function ArenaPage() {
     supabase
       .from('matches')
       .select(`
-      id, votes_a, votes_b, status, winner_id,
+      id, votes_a, votes_b, status, winner_id, created_at,
       track_a:submissions!matches_track_a_id_fkey(id, title, arrangement),
       track_b:submissions!matches_track_b_id_fkey(id, title, arrangement)
     `)

@@ -1,5 +1,6 @@
 'use client';
 import ArenaPlayer from './ArenaPlayer';
+import { evaluateResolveEligibility, guaranteeLine } from '@/lib/resolveRules';
 
 export interface BattleCardMatch {
   id: string;
@@ -7,6 +8,7 @@ export interface BattleCardMatch {
   votes_b: number;
   status: 'active' | 'resolved';
   winner_id: string | null;
+  created_at?: string;
   track_a: { id: string; title: string; arrangement: any };
   track_b: { id: string; title: string; arrangement: any };
 }
@@ -44,6 +46,30 @@ export default function BattleCard({ match, hasVoted, myVote, isLoading, onVote 
         <span>{isResolved ? '✓ RESOLVED' : <span><span style={{ color: 'var(--bd-red)' }}>●</span> BATTLE — VOTING OPEN</span>}</span>
         <span style={{ color: 'var(--bd-on-ink-muted)' }}>{total} VOTE{total !== 1 ? 'S' : ''}</span>
       </div>
+
+      {/* The live guarantee — same predicate the resolver obeys. A floor, never
+          a close time: past this instant the fight stays open until 3 non-tied
+          votes land. */}
+      {(() => {
+        if (isResolved || !match.created_at) return null;
+        const elig = evaluateResolveEligibility({
+          created_at: match.created_at,
+          votes_a: match.votes_a,
+          votes_b: match.votes_b,
+          track_a_id: match.track_a.id,
+          track_b_id: match.track_b.id,
+        });
+        if (elig.windowElapsed) return null;
+        return (
+          <div style={{
+            background: 'var(--bd-ink-soft)', color: 'var(--bd-on-ink-muted)',
+            padding: '5px 16px', fontSize: 9, fontWeight: 700, letterSpacing: 2,
+            borderBottom: '2px solid var(--bd-ink)',
+          }}>
+            {guaranteeLine(elig.windowOpensAt)}
+          </div>
+        );
+      })()}
 
       {/* Tracks */}
       <div className="arena-match-tracks">

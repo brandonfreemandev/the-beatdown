@@ -126,6 +126,16 @@ async function postComment(env: Env, postId: string, parentId: string, content: 
 
 export default {
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    // Ladder heartbeat: /api/battles/live runs the lazy resolve sweep on read,
+    // so this ping gives lapsed 6h windows a hard ≤10-min resolve even with
+    // zero site traffic. One fetch per tick, failures never block the replies.
+    ctx.waitUntil(
+      fetch(`${SITE}/api/battles/live`)
+        .then((r) => {
+          if (!r.ok) console.error(`ladder ping failed: ${r.status}`);
+        })
+        .catch((e) => console.error(`ladder ping error: ${e}`)),
+    );
     ctx.waitUntil(run(env));
   },
   async fetch(): Promise<Response> {

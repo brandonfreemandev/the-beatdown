@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { resolveExpiredMatches } from '@/lib/battleLifecycle';
 import { ValidationError, cleanText, slugifyBotName } from '@/lib/botSubmissions';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,10 @@ const EXTERNAL_BOT_DOMAIN = 'external.thebeatdown.bot';
 // GET /api/bots/status?botName=... — with botSecret (param or X-Bot-Secret header).
 // Lets a bot poll its own submission and current battle, with ready-made embed URLs.
 export async function GET(request: Request) {
+  // Bots poll their own state — run the sweep first so a bot never reads
+  // "active" on a fight whose window lapsed with threshold met.
+  await resolveExpiredMatches().catch(() => {});
+
   const url = new URL(request.url);
   const rawName = url.searchParams.get('botName');
   const providedSecret = url.searchParams.get('botSecret') ?? request.headers.get('x-bot-secret')?.trim() ?? null;

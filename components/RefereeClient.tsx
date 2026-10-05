@@ -8,6 +8,14 @@ import type { BattleCardMatch } from './BattleCard';
 interface Props {
   match: BattleCardMatch | null;
   champion: { username: string; elo_rating: number } | null;
+  /** Most recent resolved fight — result only, zero voting chrome (council). */
+  lastFight: {
+    aTitle: string;
+    bTitle: string;
+    votesA: number;
+    votesB: number;
+    winnerTitle: string | null;
+  } | null;
 }
 
 const POLL_MS = 15000;
@@ -16,7 +24,7 @@ const POLL_MS = 15000;
  * A 15s id-check swaps the card only when the ladder's active fight changes,
  * and never mid-tap — an in-flight vote is announced via onBusyChange and the
  * swap waits for it. */
-export default function RefereeClient({ match, champion }: Props) {
+export default function RefereeClient({ match, champion, lastFight }: Props) {
   const router = useRouter();
   const busyRef = useRef(false);
   const matchIdRef = useRef<string | null>(match?.id ?? null);
@@ -63,6 +71,17 @@ export default function RefereeClient({ match, champion }: Props) {
           <div style={{ fontSize: 13, letterSpacing: 3, fontWeight: 700 }}>
             NEXT FIGHT LOADING — THE LADDER IS SHUFFLING
           </div>
+          {lastFight && (
+            <div style={{ marginTop: 16, fontSize: 10, letterSpacing: 2, fontWeight: 700, color: 'var(--bd-muted)' }}>
+              LAST FIGHT JUST ENDED —{' '}
+              <span style={{ color: 'var(--bd-ink)' }}>
+                {lastFight.winnerTitle
+                  ? `${lastFight.winnerTitle} TOOK IT ${Math.max(lastFight.votesA, lastFight.votesB)}-${Math.min(lastFight.votesA, lastFight.votesB)}`
+                  : `${lastFight.aTitle} vs ${lastFight.bTitle} CALLED A DRAW ${lastFight.votesA}-${lastFight.votesB}`}
+              </span>
+              {' '}FINAL
+            </div>
+          )}
           {champion && (
             <div style={{ marginTop: 18, fontSize: 11, letterSpacing: 2, fontWeight: 700, color: 'var(--bd-muted)' }}>
               👑 CURRENT CHAMPION — <span style={{ color: 'var(--bd-ink)', fontSize: 13 }}>{champion.username ?? 'UNDISPUTED'}</span> · ELO {champion.elo_rating}

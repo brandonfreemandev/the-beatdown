@@ -99,6 +99,7 @@ export default async function EmbedBattlePage({ params }: Props) {
     votes_b: match.votes_b,
     status: match.status as 'active' | 'resolved',
     winner_id: match.winner_id,
+    created_at: match.created_at,
     track_a: { id: match.track_a.id, title: match.track_a.title, arrangement: match.track_a.arrangement },
     track_b: { id: match.track_b.id, title: match.track_b.title, arrangement: match.track_b.arrangement },
   };

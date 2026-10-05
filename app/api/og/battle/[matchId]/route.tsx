@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { createClient } from '@/lib/supabase/server';
+import { evaluateResolveEligibility, guaranteeLine } from '@/lib/resolveRules';
 
 export const dynamic = 'force-dynamic';
 export const contentType = 'image/png';
@@ -65,7 +66,7 @@ export async function GET(
   const { data: match } = await supabase
     .from('matches')
     .select(`
-      id, votes_a, votes_b, status, winner_id,
+      id, votes_a, votes_b, status, winner_id, created_at,
       track_a:submissions!matches_track_a_id_fkey(id, title, arrangement, profiles(username)),
       track_b:submissions!matches_track_b_id_fkey(id, title, arrangement, profiles(username))
     `)
@@ -78,6 +79,22 @@ export async function GET(
 
   const resolved = match.status === 'resolved';
   const winnerIsA = match.winner_id != null && match.winner_id === match.track_a.id;
+  // During the live guarantee the right footer shows the promise instead of
+  // the domain — the one clock string the council asked for on the card.
+  const elig = resolved ? null : (() => {
+    try {
+      return evaluateResolveEligibility({
+        created_at: match.created_at,
+        votes_a: match.votes_a,
+        votes_b: match.votes_b,
+        track_a_id: match.track_a.id,
+        track_b_id: match.track_b.id,
+      });
+    } catch {
+      return null;
+    }
+  })();
+  const inGuarantee = !!elig && !elig.windowElapsed;
   const titleA = match.track_a.title.toUpperCase();
   const titleB = match.track_b.title.toUpperCase();
   const userA = (match.track_a.profiles?.username ?? 'UNKNOWN').toUpperCase();
@@ -154,7 +171,9 @@ export async function GET(
             fontSize: 27, fontWeight: 700, letterSpacing: 3,
           }}>
             <span style={{ fontVariantNumeric: 'tabular-nums' }}>{banner}</span>
-            <span style={{ color: '#9a9a94', fontSize: 21 }}>{site.replace('https://', '')}</span>
+            <span style={{ color: '#9a9a94', fontSize: 21 }}>
+              {inGuarantee && elig ? guaranteeLine(elig.windowOpensAt) : site.replace('https://', '')}
+            </span>
           </div>
         </div>
       ),

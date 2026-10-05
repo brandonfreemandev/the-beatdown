@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { ensureProfile } from '@/lib/ensureProfile';
 import { resolveExpiredMatches, BATTLE_DEADLINE_HOURS } from '@/lib/battleLifecycle';
+import { evaluateResolveEligibility, MIN_VOTES_TO_RESOLVE } from '@/lib/resolveRules';
 import { checkRateLimit, clientIp } from '@/lib/botSubmissions';
 import type { Match } from '@/lib/supabase/types';
 
-const MIN_VOTES_TO_RESOLVE = 3;
 const VOTER_COOKIE = 'bd_voter';
 const VOTER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
@@ -124,19 +124,28 @@ async function finish(
   const service = createServiceClient();
   const { data: updated } = await service
     .from('matches')
-    .select('votes_a, votes_b')
+    .select('votes_a, votes_b, created_at')
     .eq('id', target.matchId)
-    .single() as { data: { votes_a: number; votes_b: number } | null };
+    .single() as { data: { votes_a: number; votes_b: number; created_at: string } | null };
 
   const votesA = updated?.votes_a ?? 0;
   const votesB = updated?.votes_b ?? 0;
-  const total = votesA + votesB;
 
-  if (total >= MIN_VOTES_TO_RESOLVE && votesA !== votesB) {
-    const winnerId = votesA > votesB ? target.trackAId : target.trackBId;
+  // The predicate is the ONLY resolve rule (council-locked): the vote path
+  // and the lazy sweep share it, so a card's promise and a sweep's decision
+  // cannot drift. Leader recomputed here at resolve time — late flips honored.
+  const elig = evaluateResolveEligibility({
+    created_at: updated?.created_at ?? new Date().toISOString(),
+    votes_a: votesA,
+    votes_b: votesB,
+    track_a_id: target.trackAId,
+    track_b_id: target.trackBId,
+  });
+
+  if (elig.canResolve) {
     const { error: resolveErr } = await (service.rpc as any)('resolve_match', {
       p_match_id: target.matchId,
-      p_winner_id: winnerId,
+      p_winner_id: elig.leaderId,
     });
     if (resolveErr) {
       console.error('resolve_match failed:', resolveErr.message);
@@ -146,12 +155,13 @@ async function finish(
     const { pairOpenRound } = await import('@/lib/pairUnmatched');
     await pairOpenRound(service).catch((e) => console.error('Post-resolve pairing failed:', e));
     return withCookie(NextResponse.json({
-      ok: true, resolved: true, winnerId, votesA, votesB, threshold: MIN_VOTES_TO_RESOLVE,
+      ok: true, resolved: true, winnerId: elig.leaderId, votesA, votesB, threshold: MIN_VOTES_TO_RESOLVE,
     }), cookie);
   }
 
   return withCookie(NextResponse.json({
     ok: true, resolved: false, votesA, votesB, threshold: MIN_VOTES_TO_RESOLVE, deadlineHours: BATTLE_DEADLINE_HOURS,
+    guaranteedOpenUntil: elig.windowElapsed ? null : elig.windowOpensAt,
   }), cookie);
 }
 
